@@ -1,7 +1,13 @@
 import { AppButton } from '@/components/ui/app-button';
 import { AppTextInput } from '@/components/ui/app-text-input';
+import { auth, db } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
+import { router } from 'expo-router';
+import { doc, setDoc } from 'firebase/firestore';
 import { useState } from "react";
+import { Country, State } from 'country-state-city';
 import {
+    Alert,
     FlatList,
     KeyboardAvoidingView,
     Modal,
@@ -12,30 +18,10 @@ import {
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
-    Alert
+    View
 } from "react-native";
-import { router } from 'expo-router';
-import { doc, updateDoc } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
 
-const COUNTRIES = [
-    "Nigeria", "Ghana", "Kenya", "South Africa", "United States",
-    "United Kingdom", "Canada", "India", "Australia", "Germany",
-];
 
-const STATES_BY_COUNTRY: Record<string, string[]> = {
-    Nigeria: ["Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", "Borno", "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu", "FCT", "Gombe", "Imo", "Jigawa", "Kaduna", "Kano", "Katsina", "Kebbi", "Kogi", "Kwara", "Lagos", "Nasarawa", "Niger", "Ogun", "Ondo", "Osun", "Oyo", "Plateau", "Rivers", "Sokoto", "Taraba", "Yobe", "Zamfara"],
-    Ghana: ["Ashanti", "Brong-Ahafo", "Central", "Eastern", "Greater Accra", "Northern", "Upper East", "Upper West", "Volta", "Western"],
-    Kenya: ["Nairobi", "Mombasa", "Kisumu", "Nakuru", "Eldoret", "Thika", "Malindi", "Kitale", "Garissa", "Kakamega"],
-    "United States": ["Alabama", "Alaska", "Arizona", "California", "Colorado", "Florida", "Georgia", "Illinois", "New York", "Texas"],
-    "United Kingdom": ["England", "Scotland", "Wales", "Northern Ireland"],
-    Canada: ["Alberta", "British Columbia", "Manitoba", "Ontario", "Quebec", "Saskatchewan"],
-    "South Africa": ["Eastern Cape", "Free State", "Gauteng", "KwaZulu-Natal", "Limpopo", "Mpumalanga", "North West", "Northern Cape", "Western Cape"],
-    India: ["Delhi", "Maharashtra", "Karnataka", "Tamil Nadu", "Uttar Pradesh", "West Bengal", "Rajasthan", "Gujarat"],
-    Australia: ["New South Wales", "Victoria", "Queensland", "Western Australia", "South Australia", "Tasmania"],
-    Germany: ["Bavaria", "Berlin", "Hamburg", "Hesse", "North Rhine-Westphalia", "Saxony"],
-};
 
 type DropdownProps = {
     label: string;
@@ -58,7 +44,9 @@ function DropdownField({ label, value, options, onSelect, disabled }: DropdownPr
                 <Text style={[styles.dropdownText, !value && styles.dropdownPlaceholder]}>
                     {value || label}
                 </Text>
-                <Text style={[styles.chevron, disabled && styles.chevronDisabled]}>⌄</Text>
+                <Text style={[styles.chevron, disabled && styles.chevronDisabled]}>
+                    <img src="/images/arrow-down-01.png" alt="dropdown"/>
+                </Text>
             </TouchableOpacity>
 
             <Modal visible={open} transparent animationType="fade">
@@ -100,11 +88,14 @@ export default function BusinessInfoScreen() {
     const [businessName, setBusinessName] = useState("");
     const [whatsapp, setWhatsapp] = useState("");
     const [country, setCountry] = useState("");
+    const [countryCode, setCountryCode] = useState("");
     const [state, setState] = useState("");
     const [loading, setLoading] = useState(false);
 
     const handleCountrySelect = (val: string) => {
         setCountry(val);
+        const found = Country.getAllCountries().find(c => c.name === val);
+        setCountryCode(found ? found.isoCode : "");
         setState(""); // reset state when country changes
     };
 
@@ -123,14 +114,14 @@ export default function BusinessInfoScreen() {
         try {
             setLoading(true);
             const storeSlug = businessName.toLowerCase().replace(/[^a-z0-9]/g, '') + '-' + Math.floor(Math.random() * 1000);
-            
-            await updateDoc(doc(db, "users", user.uid), {
+
+            await setDoc(doc(db, "users", user.uid), {
                 businessName,
                 whatsappNumber: whatsapp,
                 country,
                 state,
                 storeSlug
-            });
+            }, { merge: true });
 
             router.push('/BusinessRegisterScreen');
         } catch (error: any) {
@@ -140,7 +131,10 @@ export default function BusinessInfoScreen() {
         }
     };
 
-    const stateOptions = country ? (STATES_BY_COUNTRY[country] ?? []) : [];
+    const countryOptions = Country.getAllCountries().map(c => c.name);
+    const stateOptions = countryCode 
+        ? State.getStatesOfCountry(countryCode).map(s => s.name) 
+        : [];
 
     return (
         <SafeAreaView style={styles.safe}>
@@ -156,6 +150,19 @@ export default function BusinessInfoScreen() {
                 >
                     {/* Header */}
                     <View style={styles.header}>
+                        <TouchableOpacity 
+                            onPress={async () => {
+                                try {
+                                    await signOut(auth);
+                                    router.replace('/' as any);
+                                } catch (error: any) {
+                                    router.replace('/' as any);
+                                }
+                            }} 
+                            style={{ alignSelf: "flex-start", marginBottom: 20 }}
+                        >
+                            <Text style={{ fontSize: 18, color: PURPLE }}>← Back</Text>
+                        </TouchableOpacity>
                         <Text style={styles.title}>Business Info.</Text>
                         <Text style={styles.subtitle}>
                             These requirements help keep our community safe and credible.
@@ -180,7 +187,7 @@ export default function BusinessInfoScreen() {
                         <DropdownField
                             label="Country"
                             value={country}
-                            options={COUNTRIES}
+                            options={countryOptions}
                             onSelect={handleCountrySelect}
                         />
 
@@ -196,9 +203,9 @@ export default function BusinessInfoScreen() {
 
                 {/* Footer button */}
                 <View style={styles.footer}>
-                    <AppButton 
-                        title={loading ? "Please wait..." : "Continue"} 
-                        onPress={handleContinue} 
+                    <AppButton
+                        title={loading ? "Please wait..." : "Continue"}
+                        onPress={handleContinue}
                         disabled={loading}
                     />
                 </View>
@@ -327,7 +334,7 @@ const styles = StyleSheet.create({
     // Footer
     footer: {
         paddingHorizontal: 24,
-        paddingBottom: Platform.OS === "ios" ? 8 : 24,
+        paddingBottom: Platform.OS === "ios" ? 8 : 58,
         paddingTop: 12,
         backgroundColor: "#F5F5FA",
     },

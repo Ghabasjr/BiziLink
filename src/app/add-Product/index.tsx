@@ -8,7 +8,7 @@ export default function AddProductPage() {
             onBack={() => router.back()}
             onContinue={(category) => {
                 router.push({
-                    pathname: "/add-product/details",
+                    pathname: "/add-Product/details",
                     params: { categoryId: category.id, categoryName: category.name },
                 });
             }}

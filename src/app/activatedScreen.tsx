@@ -55,7 +55,7 @@ export default function ActiveDashboard({
         { key: "Profile", icon: "👤" },
     ];
     onAddProduct = () => {
-        router.push("/add-Product/index");
+        router.push("/add-Product" as any);
     };
     return (
         <SafeAreaView style={styles.safe}>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, router } from 'expo-router';
-import { StyleSheet, Text, View, Alert } from 'react-native';
+import { StyleSheet, Text, View, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 
@@ -9,8 +9,10 @@ import { AppButton } from '@/components/ui/app-button';
 import { AppTextInput } from '@/components/ui/app-text-input';
 import { GoogleMark } from '@/components/ui/google-mark';
 import { Colors, Fonts } from '@/constants/theme';
+import { useGoogleAuth } from '@/hooks/useGoogleAuth';
 
 export default function LoginScreen() {
+  const { signInWithGoogle } = useGoogleAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -33,64 +35,75 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={styles.screen}>
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>
-            Login Your Account - Login with Google or Email for Quick Access!
-          </Text>
-        </View>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.content}>
+            <View style={styles.header}>
+              <Text style={styles.title}>Welcome Back</Text>
+              <Text style={styles.subtitle}>
+                Login Your Account - Login with Google or Email for Quick Access!
+              </Text>
+            </View>
 
-        <AppButton
-          title="Continue with Google"
-          variant="outline"
-          icon={<GoogleMark />}
-          style={styles.googleButton}
-          onPress={() => Alert.alert('Coming Soon', 'Google sign in is coming soon!')}
-        />
+            <AppButton
+              title="Continue with Google"
+              variant="outline"
+              icon={<GoogleMark />}
+              style={styles.googleButton}
+              onPress={signInWithGoogle}
+            />
 
-        <View style={styles.dividerRow}>
-          <View style={styles.divider} />
-          <Text style={styles.dividerText}>Or</Text>
-          <View style={styles.divider} />
-        </View>
+            <View style={styles.dividerRow}>
+              <View style={styles.divider} />
+              <Text style={styles.dividerText}>Or</Text>
+              <View style={styles.divider} />
+            </View>
 
-        <View style={styles.form}>
-          <AppTextInput
-            placeholder="Email/Phone number"
-            keyboardType="email-address"
-            textContentType="username"
-            autoCapitalize="none"
-            value={email}
-            onChangeText={setEmail}
-          />
-          <AppTextInput
-            placeholder="Password"
-            textContentType="password"
-            secureTextEntry
-            showSecureToggle
-            value={password}
-            onChangeText={setPassword}
-          />
-        </View>
-        <Link href="/forgot-password" style={styles.forgotText}>
-          Forgot Password?
-        </Link>
+            <View style={styles.form}>
+              <AppTextInput
+                placeholder="Email/Phone number"
+                keyboardType="email-address"
+                textContentType="username"
+                autoCapitalize="none"
+                value={email}
+                onChangeText={setEmail}
+              />
+              <AppTextInput
+                placeholder="Password"
+                textContentType="password"
+                secureTextEntry
+                showSecureToggle
+                value={password}
+                onChangeText={setPassword}
+              />
+            </View>
+            <Link href="/forgot-password" style={styles.forgotText}>
+              Forgot Password?
+            </Link>
 
-        <AppButton 
-          title={loading ? "Please wait..." : "Continue"} 
-          style={styles.continueButton} 
-          onPress={handleLogin}
-          disabled={loading}
-        />
+            <AppButton 
+              title={loading ? "Please wait..." : "Continue"} 
+              style={styles.continueButton} 
+              onPress={handleLogin}
+              disabled={loading}
+            />
 
-        <Text style={styles.footerText}>
-          Do you have an account?{' '}
-          <Link href="/signup" style={styles.footerLink}>
-            SignUp
-          </Link>
-        </Text>
-      </View>
+            <Text style={styles.footerText}>
+              Do you have an account?{' '}
+              <Link href="/signup" style={styles.footerLink}>
+                SignUp
+              </Link>
+            </Text>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -100,9 +113,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FBFAFC',
   },
-  content: {
-    flex: 1,
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
+  },
+  content: {
     paddingHorizontal: 20,
     paddingBottom: 20,
   },

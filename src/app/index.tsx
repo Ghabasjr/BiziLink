@@ -7,16 +7,16 @@ import { AppButton } from '@/components/ui/app-button';
 import { Colors, Fonts } from '@/constants/theme';
 
 const collageImages = {
-  cap: 'https://images.unsplash.com/photo-1576871337622-98d48d1cf531?q=80&w=700&auto=format&fit=crop',
+  cap: '/images/cap.png',
   sneakers:
-    'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=700&auto=format&fit=crop',
+    '/images/sneakers.png',
   watch:
-    'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=900&auto=format&fit=crop',
+    '/images/watch.png',
   fashion:
-    'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=700&auto=format&fit=crop',
-  bag: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=900&auto=format&fit=crop',
+    '/images/fashion.png',
+  bag: '/images/bag.png',
   shirt:
-    'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=700&auto=format&fit=crop',
+    '/images/shirt.png',
 };
 
 export default function HomeScreen() {
@@ -35,11 +35,11 @@ export default function HomeScreen() {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.content}>
           <View style={styles.logoRow}>
-            <View style={styles.logoMark}>
-              <View style={styles.logoHandle} />
-              <View style={styles.logoChainLeft} />
-              <View style={styles.logoChainRight} />
-            </View>
+            <Image
+              source={require('../../assets/images/BizlinkLogo.png')}
+              style={styles.logoImage}
+              contentFit="contain"
+            />
             <Text style={styles.logoText}>BiziLink</Text>
           </View>
 
@@ -154,49 +154,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 9,
   },
-  logoMark: {
-    width: 54,
-    height: 42,
-    borderRadius: 5,
-    backgroundColor: Colors.brand.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    transform: [{ rotate: '4deg' }],
-    shadowColor: Colors.brand.primary,
-    shadowOpacity: 0.35,
-    shadowRadius: 9,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 6,
-  },
-  logoHandle: {
-    position: 'absolute',
-    top: -10,
-    width: 22,
-    height: 17,
-    borderRadius: 9,
-    borderWidth: 3,
-    borderColor: Colors.brand.primary,
-    backgroundColor: 'transparent',
-  },
-  logoLink: {
-    display: 'none',
-  },
-  logoChainLeft: {
-    width: 17,
-    height: 11,
+  logoImage: {
+    width: 44,
+    height: 44,
     borderRadius: 8,
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
-    transform: [{ rotate: '-32deg' }, { translateX: 5 }],
-  },
-  logoChainRight: {
-    width: 17,
-    height: 11,
-    borderRadius: 8,
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
-    position: 'absolute',
-    transform: [{ rotate: '-32deg' }, { translateX: -5 }],
   },
   logoText: {
     color: Colors.brand.primary,
@@ -225,5 +186,6 @@ const styles = StyleSheet.create({
   },
   continueButton: {
     alignSelf: 'stretch',
+    paddingBottom: 20,
   },
 });
