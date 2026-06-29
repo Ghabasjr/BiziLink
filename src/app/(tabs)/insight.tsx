@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState } from "react";
+import { Image } from "expo-image";
 import {
     View,
     Text,
@@ -95,28 +96,28 @@ export default function InsightScreen() {
         {
             label: "Total Products",
             value: productCount,
-            icon: "▦",
+            icon: require("../../../assets/images/analytics-01.png"),
             bg: "#EEE9FB",
             iconBg: "#7B52E8",
         },
         {
             label: "Store Views",
             value: userData?.views || 0,
-            icon: "👁",
+            icon: require("../../../assets/images/view.png"),
             bg: "#FDE8E8",
             iconBg: "#E85252",
         },
         {
             label: "WhatsApp Leads",
             value: userData?.whatsappLeads || 0,
-            icon: "💬",
+            icon: require("../../../assets/images/whatsapp.png"),
             bg: "#E5F7EE",
             iconBg: "#25D366",
         },
         {
             label: "Likes Received",
             value: userData?.likesReceived || 0,
-            icon: "♥",
+            icon: require("../../../assets/images/favourite.png"),
             bg: "#FEF3E2",
             iconBg: "#F5A623",
         },
@@ -147,7 +148,7 @@ export default function InsightScreen() {
                     {stats.map((s) => (
                         <View key={s.label} style={[styles.statCard, { backgroundColor: s.bg }]}>
                             <View style={[styles.statIconCircle, { backgroundColor: s.iconBg }]}>
-                                <Text style={styles.statIcon}>{s.icon}</Text>
+                                <Image source={s.icon} style={styles.statIconImage} contentFit="contain" />
                             </View>
                             <Text style={styles.statValue}>{s.value}</Text>
                             <Text style={styles.statLabel}>{s.label}</Text>
@@ -177,7 +178,7 @@ export default function InsightScreen() {
                         <Text style={styles.emptyIcon}>❤️</Text>
                         <Text style={styles.emptyTitle}>No likes yet</Text>
                         <Text style={styles.emptyText}>
-                            When customers like your products, they'll appear here.
+                            {"When customers like your products, they'll appear here."}
                         </Text>
                     </View>
                 ) : (
@@ -287,6 +288,10 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     statIcon: { fontSize: 18, color: "#fff" },
+    statIconImage: {
+        width: 20,
+        height: 20,
+    },
     statValue: { fontSize: 30, fontWeight: "900", color: "#1A1A1A" },
     statLabel: { fontSize: 12, color: "#555", fontWeight: "500", marginTop: 2 },
 

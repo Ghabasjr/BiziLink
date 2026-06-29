@@ -64,7 +64,7 @@ export default function ForgotPasswordScreen({ onBack, onContinue }: Props) {
                 <AppTextInput
                     style={styles.input}
                     placeholder="Email/Phone number"
-                    placeholderTextColor="#AAAAAA"
+                    // placeholderTextColor="#AAAAAA"
                     value={value}
                     onChangeText={setValue}
                     keyboardType="email-address"
@@ -75,14 +75,14 @@ export default function ForgotPasswordScreen({ onBack, onContinue }: Props) {
 
             {/* ── Footer ── */}
             <View style={styles.footer}>
-                {/* <TouchableOpacity
+                <TouchableOpacity
                     style={[styles.continueBtn, !value && styles.continueBtnDisabled]}
                     onPress={() => value && onContinue?.(value)}
                     activeOpacity={0.85}
                 >
                     <Text style={styles.continueBtnText}>Continue</Text>
-                </TouchableOpacity> */}
-                <AppButton title="Continue" />
+                </TouchableOpacity>
+                {/* <AppButton title="Continue" /> */}
 
                 <TouchableOpacity onPress={onBack} activeOpacity={0.7}>
                     <Text style={styles.backText}>Back</Text>
@@ -99,6 +99,7 @@ const styles = StyleSheet.create({
     safe: {
         flex: 1,
         backgroundColor: "#F5F5F8",
+        paddingTop:50
     },
 
     // ── Header ─
@@ -141,7 +142,7 @@ const styles = StyleSheet.create({
     body: {
         flex: 1,
         alignItems: "center",
-        paddingHorizontal: 24,
+        // paddingHorizontal: 24,
         paddingTop: 40,
     },
 
@@ -233,7 +234,7 @@ const styles = StyleSheet.create({
     // ── Footer ──
     footer: {
         paddingHorizontal: 24,
-        paddingBottom: Platform.OS === "android" ? 28 : 16,
+        paddingBottom: Platform.OS === "android" ? 55 : 16,
         alignItems: "center",
         gap: 14,
     },

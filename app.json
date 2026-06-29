@@ -30,9 +30,11 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#933EFF",
+          "image": "./assets/images/BizlinkLogo.png",
+          "imageWidth": 120,
           "android": {
-            "image": "./assets/images/splash-icon.png",
-            "imageWidth": 76
+            "image": "./assets/images/BizlinkLogo.png",
+            "imageWidth": 120
           }
         }
       ]

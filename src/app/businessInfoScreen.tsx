@@ -1,5 +1,6 @@
 import { AppButton } from '@/components/ui/app-button';
 import { AppTextInput } from '@/components/ui/app-text-input';
+import { Image } from 'expo-image';
 import { auth, db } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { router } from 'expo-router';
@@ -44,9 +45,11 @@ function DropdownField({ label, value, options, onSelect, disabled }: DropdownPr
                 <Text style={[styles.dropdownText, !value && styles.dropdownPlaceholder]}>
                     {value || label}
                 </Text>
-                <Text style={[styles.chevron, disabled && styles.chevronDisabled]}>
-                    <img src="/images/arrow-down-01.png" alt="dropdown"/>
-                </Text>
+                <Image
+                    source={require('../../assets/images/arrow-down-01.png')}
+                    style={[styles.chevronImage, disabled && styles.chevronDisabled]}
+                    contentFit="contain"
+                />
             </TouchableOpacity>
 
             <Modal visible={open} transparent animationType="fade">
@@ -123,7 +126,7 @@ export default function BusinessInfoScreen() {
                 storeSlug
             }, { merge: true });
 
-            router.push('/BusinessRegisterScreen');
+            router.push('/businessRegisterScreen');
         } catch (error: any) {
             Alert.alert("Error", error.message);
         } finally {
@@ -273,14 +276,14 @@ const styles = StyleSheet.create({
     dropdownPlaceholder: {
         color: "#9B9BAD",
     },
-    chevron: {
-        fontSize: 20,
-        color: "#555",
-        lineHeight: 22,
-        marginTop: -4,
+    chevronImage: {
+        width: 14,
+        height: 14,
+        tintColor: "#555",
     },
     chevronDisabled: {
-        color: "#aaa",
+        tintColor: "#aaa",
+        opacity: 0.5,
     },
 
     // Modal

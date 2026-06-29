@@ -1,22 +1,22 @@
 /* eslint-disable react-hooks/set-state-in-effect */
+import { auth, db } from "@/lib/firebase";
+import { useRouter } from "expo-router";
+import { signOut } from "firebase/auth";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    TouchableOpacity,
     ActivityIndicator,
     Alert,
-    TextInput,
     Platform,
+    ScrollView,
     StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { signOut } from "firebase/auth";
-import { useRouter } from "expo-router";
-import { auth, db } from "@/lib/firebase";
 
 const PURPLE = "#6B3FE7";
 const PURPLE_LIGHT = "#EDE8FC";
@@ -102,15 +102,15 @@ export default function ProfileScreen() {
         userData?.subscriptionStatus === "active"
             ? "#25C16F"
             : userData?.subscriptionStatus === "pending"
-            ? "#F5A623"
-            : "#E85252";
+                ? "#F5A623"
+                : "#E85252";
 
     const statusLabel =
         userData?.subscriptionStatus === "active"
             ? "Active"
             : userData?.subscriptionStatus === "pending"
-            ? "Pending Verification"
-            : "Expired";
+                ? "Pending Verification"
+                : "Expired";
 
     return (
         <SafeAreaView style={styles.safe}>
@@ -198,7 +198,7 @@ export default function ProfileScreen() {
                 <View style={styles.card}>
                     <Text style={styles.cardTitle}>Subscription</Text>
                     <InfoRow icon="💳" label="Status" value={statusLabel} valueColor={statusColor} />
-                    <InfoRow icon="💰" label="Plan" value="₦800 / month" last />
+                    <InfoRow icon="💰" label="Plan" value="₦1000 / month" last />
                 </View>
 
                 {/* Actions */}

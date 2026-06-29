@@ -1,21 +1,37 @@
-import { useState } from 'react';
-import { Link, router } from 'expo-router';
-import { StyleSheet, Text, View, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Link } from 'expo-router';
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import { useState } from 'react';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { auth } from '@/lib/firebase';
 import { AppButton } from '@/components/ui/app-button';
 import { AppTextInput } from '@/components/ui/app-text-input';
 import { GoogleMark } from '@/components/ui/google-mark';
 import { Colors, Fonts } from '@/constants/theme';
 import { useGoogleAuth } from '@/hooks/useGoogleAuth';
+import { auth } from '@/lib/firebase';
 
 export default function LoginScreen() {
   const { signInWithGoogle } = useGoogleAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // const handleLogin = async () => {
+  //   if (!email || !password) {
+  //     Alert.alert('Error', 'Please enter email and password');
+  //     return;
+  //   }
+  //   try {
+  //     setLoading(true);
+  //     await signInWithEmailAndPassword(auth, email, password);
+  //     router.replace('/(tabs)/home' as any);
+  //   } catch (error: any) {
+  //     Alert.alert('Login Failed', error.message);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -25,7 +41,8 @@ export default function LoginScreen() {
     try {
       setLoading(true);
       await signInWithEmailAndPassword(auth, email, password);
-      router.replace('/(tabs)/index' as any);
+      // No manual redirect — the root layout's navigation effect
+      // handles routing based on the user's profile state.
     } catch (error: any) {
       Alert.alert('Login Failed', error.message);
     } finally {
@@ -88,9 +105,9 @@ export default function LoginScreen() {
               Forgot Password?
             </Link>
 
-            <AppButton 
-              title={loading ? "Please wait..." : "Continue"} 
-              style={styles.continueButton} 
+            <AppButton
+              title={loading ? "Please wait..." : "Continue"}
+              style={styles.continueButton}
               onPress={handleLogin}
               disabled={loading}
             />

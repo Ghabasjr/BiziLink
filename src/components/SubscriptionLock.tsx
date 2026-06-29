@@ -1,6 +1,5 @@
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { router } from "expo-router";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 const PURPLE = "#6B3FE7";
 
@@ -17,7 +16,7 @@ export default function SubscriptionLock({ tabName }: SubscriptionLockProps) {
         </View>
         <Text style={styles.title}>Unlock {tabName}</Text>
         <Text style={styles.description}>
-          Activate your storefront subscription for just ₦800/month to unlock {tabName.toLowerCase()} and access premium seller tools.
+          Activate your storefront subscription for just ₦1000/month to unlock {tabName.toLowerCase()} and access premium seller tools.
         </Text>
         <TouchableOpacity
           style={styles.btn}

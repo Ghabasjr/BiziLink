@@ -18,8 +18,8 @@ export function useGoogleAuth() {
   const [, , promptAsync] = Google.useAuthRequest({
     webClientId: WEB_CLIENT_ID,
     // Uncomment and fill in for native (dev build) support:
-    // androidClientId: 'YOUR_ANDROID_CLIENT_ID.apps.googleusercontent.com',
-    // iosClientId: 'YOUR_IOS_CLIENT_ID.apps.googleusercontent.com',
+    androidClientId: '781913153882-s2j8m511221b2l699f8l518h49q2713r.apps.googleusercontent.com',
+    iosClientId: '781913153882-s2j8m511221b2l699f8l518h49q2713r.apps.googleusercontent.com',
   });
 
   const signInWithGoogle = useCallback(async () => {

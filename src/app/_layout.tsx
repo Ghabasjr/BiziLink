@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react';
 import { Stack, router, useSegments } from 'expo-router';
-import { ActivityIndicator, View } from 'react-native';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
 
-import { auth, db } from '@/lib/firebase';
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
+import { auth, db } from '@/lib/firebase';
 
 export default function RootLayout() {
   const [checking, setChecking] = useState(true);
@@ -27,6 +26,31 @@ export default function RootLayout() {
   }, []);
 
   // Listen to Firestore Profile Data when user is logged in
+  // useEffect(() => {
+  //   if (!user) {
+  //     // eslint-disable-next-line react-hooks/set-state-in-effect
+  //     setUserData(null);
+  //     return;
+  //   }
+
+  //   const docUnsub = onSnapshot(doc(db, 'users', user.uid), (snap) => {
+  //     if (snap.exists()) {
+  //       setUserData(snap.data());
+  //     } else {
+  //       setUserData({}); // Non-null empty object if user profile doesn't exist yet
+  //     }
+  //     setChecking(false);
+  //   }, (err) => {
+  //     console.error("onSnapshot layout error:", err);
+  //     setUserData({});
+  //     setChecking(false);
+  //   });
+
+  //   return docUnsub;
+  // }, [user]);
+
+
+  // Listen to Firestore Profile Data when user is logged in
   useEffect(() => {
     if (!user) {
       setUserData(null);
@@ -34,10 +58,12 @@ export default function RootLayout() {
     }
 
     const docUnsub = onSnapshot(doc(db, 'users', user.uid), (snap) => {
-      if (snap.exists()) {
+      if (snap.exists() && Object.keys(snap.data()).length > 0) {
         setUserData(snap.data());
       } else {
-        setUserData({}); // Non-null empty object if user profile doesn't exist yet
+        // Doc missing or empty — treat as genuinely incomplete profile,
+        // but only after we're sure the snapshot has settled.
+        setUserData({});
       }
       setChecking(false);
     }, (err) => {
@@ -50,8 +76,12 @@ export default function RootLayout() {
   }, [user]);
 
   // Handle Protected Routes & Navigation Decisions
+  // useEffect(() => {
+  //   if (!authLoaded) return;
+
+  // Handle Protected Routes & Navigation Decisions
   useEffect(() => {
-    if (!authLoaded) return;
+    if (!authLoaded || checking) return;
 
     // Define public/onboarding routes that do not require login
     const isPublicRoute =
@@ -63,7 +93,7 @@ export default function RootLayout() {
       segments[0] === 'store';
 
     const isBusinessInfoRoute = segments[0] === 'businessInfoScreen';
-    const isBusinessRegisterRoute = segments[0] === 'BusinessRegisterScreen';
+    const isBusinessRegisterRoute = segments[0] === 'businessRegisterScreen';
     const isAccountCreatedRoute = segments[0] === 'accountCreated';
     const isPendingRoute = segments[0] === 'pendingScreen';
     const isInsideTabs = segments[0] === '(tabs)';
@@ -84,9 +114,16 @@ export default function RootLayout() {
       const hasBusinessName = !!(userData.businessName && userData.businessName.trim());
       const subStatus = userData.subscriptionStatus;
 
+      // if (!hasBusinessName) {
+      //   // User hasn't completed business info yet — only redirect if not already there
+      //   if (!isOnboardingRoute) {
+      //     router.replace('/businessInfoScreen' as any);
+      //   }
+
       if (!hasBusinessName) {
-        // User hasn't completed business info yet — only redirect if not already there
-        if (!isOnboardingRoute) {
+        // Only redirect to businessInfoScreen if the user is NOT on any public/signup
+        // route OR onboarding route — prevents cold-start auto-redirects for new signups
+        if (!isOnboardingRoute && !isPublicRoute) {
           router.replace('/businessInfoScreen' as any);
         }
       } else if (subStatus === 'pending') {
@@ -94,26 +131,42 @@ export default function RootLayout() {
         if (!isPendingRoute) {
           router.replace('/pendingScreen' as any);
         }
-      } else {
-        // Fully registered — send to tabs only if on a public/landing page
+      } else if (subStatus === 'active') {
+        // Fully registered — send to tabs if on public or onboarding page
         if (!isInsideTabs && (isPublicRoute || isOnboardingRoute)) {
-          router.replace('/(tabs)/index' as any);
+          router.replace('/(tabs)/home' as any);
+        }
+      } else {
+        // Expired/unpaid — redirect to tabs only if they are on a public route (like index or login)
+        // This lets them stay on businessRegisterScreen onboarding without being redirected to tabs automatically
+        if (!isInsideTabs && isPublicRoute) {
+          router.replace('/(tabs)/home' as any);
         }
       }
     }
   }, [authLoaded, user, userData, segments]);
 
+  // if (checking) {
+  //   return (
+  //     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F7F7F9' }}>
+  //       <ActivityIndicator size="large" color="#6B3FE7" />
+  //     </View>
+  //   );
+  // }
+
+  // return (
+  //   <>
+  //     <AnimatedSplashOverlay />
+  //     <Stack screenOptions={{ headerShown: false }} />
+  //   </>
+  // );
+
   if (checking) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F7F7F9' }}>
-        <ActivityIndicator size="large" color="#6B3FE7" />
-      </View>
-    );
+    return <AnimatedSplashOverlay />;
   }
 
   return (
     <>
-      <AnimatedSplashOverlay />
       <Stack screenOptions={{ headerShown: false }} />
     </>
   );

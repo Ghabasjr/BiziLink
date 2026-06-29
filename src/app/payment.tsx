@@ -1,11 +1,11 @@
+import { useRouter } from "expo-router";
+import { doc, updateDoc } from "firebase/firestore";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { useState } from "react";
 import { Alert } from "react-native";
-import { useRouter } from "expo-router";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { doc, updateDoc } from "firebase/firestore";
 
-import { auth, db, storage } from "@/lib/firebase";
 import PaymentScreen from "@/components/ui/paymentScreen";
+import { auth, db, storage } from "@/lib/firebase";
 
 export default function PaymentPage() {
     const router = useRouter();
@@ -26,21 +26,40 @@ export default function PaymentPage() {
         try {
             setIsSubmitting(true);
 
-            // Upload receipt to Firebase Storage
-            const response = await fetch(receiptUri);
-            const blob = await response.blob();
-            const receiptRef = ref(storage, `receipts/${user.uid}/${Date.now()}`);
-            await uploadBytes(receiptRef, blob);
-            const receiptUrl = await getDownloadURL(receiptRef);
-
-            // Update subscription status to 'pending' in Firestore
-            await updateDoc(doc(db, "users", user.uid), {
-                subscriptionStatus: "pending",
-                receiptUrl,
-                receiptSubmittedAt: new Date().toISOString(),
+            // Convert local file URI to Blob using XMLHttpRequest
+            const blob: any = await new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.onload = function () {
+                    resolve(xhr.response);
+                };
+                xhr.onerror = function (e) {
+                    console.log(e);
+                    reject(new TypeError("Network request failed"));
+                };
+                xhr.responseType = "blob";
+                xhr.open("GET", receiptUri, true);
+                xhr.send(null);
             });
 
-            router.push("/pendingScreen");
+            try {
+                // Upload receipt to Firebase Storage
+                const receiptRef = ref(storage, `receipts/${user.uid}/${Date.now()}`);
+                await uploadBytes(receiptRef, blob);
+                const receiptUrl = await getDownloadURL(receiptRef);
+
+                // Update subscription status to 'pending' in Firestore
+                await updateDoc(doc(db, "users", user.uid), {
+                    subscriptionStatus: "pending",
+                    receiptUrl,
+                    receiptSubmittedAt: new Date().toISOString(),
+                });
+
+                router.push("/pendingScreen");
+            } finally {
+                if (blob && typeof blob.close === "function") {
+                    blob.close();
+                }
+            }
         } catch (error: any) {
             Alert.alert("Error", error.message);
         } finally {
@@ -50,12 +69,12 @@ export default function PaymentPage() {
 
     return (
         <PaymentScreen
-            amount="₦800"
+            amount="₦1000"
             accountName="Bizilink Tech Ng"
             bankName="Access Bank, Plc"
             accountNo="1221244910"
             onSubmit={handleSubmit}
-            onBackToHome={() => router.push("/(tabs)/index" as any)}
+            onBackToHome={() => router.push("/(tabs)/home" as any)}
             isSubmitting={isSubmitting}
         />
     );

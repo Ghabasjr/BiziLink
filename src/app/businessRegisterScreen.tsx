@@ -1,6 +1,6 @@
 import { AppButton } from "@/components/ui/app-button";
-import { useEffect, useState } from "react";
 import { router } from "expo-router";
+import { useEffect, useState } from "react";
 import {
     Animated,
     Platform,
@@ -135,7 +135,7 @@ export default function BusinessRegisteredScreen() {
                             <Text style={styles.cardDesc}>Get access to all features and{"\n"}grow your business with ease</Text>
                         </View>
                         <View style={styles.priceBadge}>
-                            <Text style={styles.priceAmount}>₦1500</Text>
+                            <Text style={styles.priceAmount}>₦1000</Text>
                             <Text style={styles.pricePer}>Per month</Text>
                         </View>
                     </View>
@@ -169,7 +169,7 @@ export default function BusinessRegisteredScreen() {
                     </View>
                     <View>
                         <Text style={styles.howTitle}>How It Work</Text>
-                        <Text style={styles.howSub}>Pay ₦899 now to activate your account</Text>
+                        <Text style={styles.howSub}>Pay ₦1000 now to activate your account</Text>
                     </View>
                 </Animated.View>
 
@@ -180,7 +180,7 @@ export default function BusinessRegisteredScreen() {
             {/* Footer buttons */}
             <Animated.View style={[styles.footer, { opacity: btnOpacity }]}>
                 <AppButton title="Proceed to Pay" onPress={() => router.push('/payment')} />
-                <TouchableOpacity style={styles.laterBtn} onPress={() => router.push('/(tabs)/index' as any)} activeOpacity={0.7}>
+                <TouchableOpacity style={styles.laterBtn} onPress={() => router.push('/(tabs)/home' as any)} activeOpacity={0.7}>
                     <Text style={styles.laterText}>May be later</Text>
                 </TouchableOpacity>
             </Animated.View>
@@ -442,7 +442,7 @@ const styles = StyleSheet.create({
     // Footer
     footer: {
         paddingHorizontal: 20,
-        paddingBottom: Platform.OS === "ios" ? 12 : 24,
+        paddingBottom: Platform.OS === "ios" ? 12 : 54,
         paddingTop: 10,
         backgroundColor: BG,
         gap: 10,

@@ -1,4 +1,5 @@
 import { auth, db } from "@/lib/firebase";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { collection, doc, getDoc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
@@ -58,7 +59,7 @@ export default function PendingDashboard() {
                         await updateDoc(doc(db, "users", user.uid), {
                             subscriptionStatus: "expired",
                         });
-                        router.replace("/(tabs)/index" as any);
+                        router.replace("/(tabs)/home" as any);
                     },
                 },
             ]
@@ -74,10 +75,10 @@ export default function PendingDashboard() {
     }
 
     const statCards = [
-        { label: "Total\nProducts", value: productCount, bg: "#EEE9FB", iconBg: "#7B52E8", icon: "▦" },
-        { label: "Store\nViews", value: userData?.views || 0, bg: "#FDE8E8", iconBg: "#E85252", icon: "👁" },
-        { label: "Whatsapp\nLead", value: userData?.whatsappLeads || 0, bg: "#E5F7EE", iconBg: "#25D366", icon: "💬" },
-        { label: "Likes\nReceived", value: userData?.likesReceived || 0, bg: "#FEF3E2", iconBg: "#F5A623", icon: "♥" },
+        { label: "Total\nProducts", value: productCount, bg: "#EEE9FB", iconBg: "#7B52E8", icon: require("../../assets/images/analytics-01.png") },
+        { label: "Store\nViews", value: userData?.views || 0, bg: "#FDE8E8", iconBg: "#E85252", icon: require("../../assets/images/view.png") },
+        { label: "Whatsapp\nLead", value: userData?.whatsappLeads || 0, bg: "#E5F7EE", iconBg: "#25D366", icon: require("../../assets/images/whatsapp.png") },
+        { label: "Likes\nReceived", value: userData?.likesReceived || 0, bg: "#FEF3E2", iconBg: "#F5A623", icon: require("../../assets/images/favourite.png") },
     ];
 
     return (
@@ -143,7 +144,11 @@ export default function PendingDashboard() {
                     <View style={styles.actionDivider} />
                     <View style={styles.actionBtn}>
                         <View style={[styles.actionIcon, { backgroundColor: "#FEF0DC" }]}>
-                            <Text style={[styles.actionIconText, { color: "#F5A623" }]}>⛓</Text>
+                            <Image
+                                source={require('../../assets/images/link-03.png')}
+                                style={styles.actionIconImage}
+                                contentFit="contain"
+                            />
                         </View>
                         <Text style={styles.actionLabel}>Share Store</Text>
                     </View>
@@ -155,7 +160,7 @@ export default function PendingDashboard() {
                     {statCards.map((stat) => (
                         <View key={stat.label} style={[styles.statCard, { backgroundColor: stat.bg }]}>
                             <View style={[styles.statIconCircle, { backgroundColor: stat.iconBg }]}>
-                                <Text style={styles.statIconText}>{stat.icon}</Text>
+                                <Image source={stat.icon} style={styles.statIconImage} contentFit="contain" />
                             </View>
                             <Text style={styles.statLabel}>{stat.label}</Text>
                             <Text style={styles.statValue}>{stat.value}</Text>
@@ -313,5 +318,13 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: "#666",
         lineHeight: 19
+    },
+    actionIconImage: {
+        width: 22,
+        height: 22,
+    },
+    statIconImage: {
+        width: 20,
+        height: 20,
     },
 });

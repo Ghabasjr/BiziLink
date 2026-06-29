@@ -24,7 +24,7 @@ interface Props {
 }
 
 export default function PaymentScreen({
-    amount = "₦800",
+    amount = "₦1000",
     accountName = "Bizilink Tech Ng",
     bankName = "Access Bank, Plc",
     accountNo = "1221244910",
@@ -130,7 +130,7 @@ export default function PaymentScreen({
 
                 {/* ── Instruction ── */}
                 <Text style={styles.instruction}>
-                    Copy the account the details above and Pay {amount}, upload your receipt, and our team
+                    Copy the account details above and Pay {amount}, upload your receipt, and our team
                     will verify and activate your subscription.
                 </Text>
 
@@ -161,24 +161,24 @@ export default function PaymentScreen({
             {/* ── Footer ── */}
             <View style={styles.footer}>
                 <TouchableOpacity
-                    style={[styles.submitBtn, isSubmitting && { opacity: 0.7 }]}
+                    style={[styles.submitBtn, (!receiptUri || isSubmitting) && { opacity: 0.4 }]}
                     onPress={handleSubmit}
                     activeOpacity={0.85}
-                    disabled={isSubmitting}
+                    disabled={!receiptUri || isSubmitting}
                 >
                     <Text style={styles.submitBtnText}>
                         {isSubmitting ? "Submitting..." : "Submit Receipt"}
                     </Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity
+                {/* <TouchableOpacity
                     style={styles.backBtn}
                     onPress={onBackToHome}
                     activeOpacity={0.8}
                     disabled={isSubmitting}
                 >
                     <Text style={styles.backBtnText}>Back to Home</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
             </View>
         </SafeAreaView>
     );
@@ -192,17 +192,21 @@ const styles = StyleSheet.create({
     safe: {
         flex: 1,
         backgroundColor: "#F7F7F9",
+        paddingTop: Platform.OS === "android" ? 40 : 30,
+        padding: 10
     },
 
     // Amount Banner
     amountBanner: {
         backgroundColor: PURPLE,
-        paddingHorizontal: 22,
+        paddingHorizontal: 30,
         paddingTop: Platform.OS === "android" ? 20 : 14,
         paddingBottom: 24,
+        borderRadius: 20,
+        paddingVertical: 20
     },
     amountLabel: {
-        fontSize: 13,
+        fontSize: 16,
         color: "rgba(255,255,255,0.8)",
         fontWeight: "500",
         marginBottom: 4,
@@ -412,7 +416,7 @@ const styles = StyleSheet.create({
     footer: {
         paddingHorizontal: 16,
         paddingTop: 12,
-        paddingBottom: Platform.OS === "ios" ? 28 : 16,
+        paddingBottom: Platform.OS === "ios" ? 28 : 56,
         gap: 10,
         backgroundColor: "#F7F7F9",
     },

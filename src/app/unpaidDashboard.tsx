@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Image } from "expo-image";
 import {
     Animated,
     Platform,
@@ -105,7 +106,11 @@ function QuickActions() {
             <View style={styles.quickDivider} />
             <TouchableOpacity style={styles.quickBtn} activeOpacity={0.75}>
                 <View style={[styles.quickIcon, { backgroundColor: ORANGE_BG }]}>
-                    <Text style={{ fontSize: 18 }}>🔗</Text>
+                    <Image
+                        source={require('../../assets/images/link-03.png')}
+                        style={styles.quickIconImage}
+                        contentFit="contain"
+                    />
                 </View>
                 <Text style={styles.quickText}>Share Store</Text>
             </TouchableOpacity>
@@ -115,7 +120,7 @@ function QuickActions() {
 
 // ── Stat card ──────────────────────────────────────────────────────────────────
 type StatCardProps = {
-    icon: string;
+    icon: any;
     iconBg: string;
     label: string;
     value: number;
@@ -125,7 +130,7 @@ function StatCard({ icon, iconBg, label, value }: StatCardProps) {
     return (
         <View style={styles.statCard}>
             <View style={[styles.statIcon, { backgroundColor: iconBg }]}>
-                <Text style={{ fontSize: 18 }}>{icon}</Text>
+                <Image source={icon} style={styles.statIconImage} contentFit="contain" />
             </View>
             <Text style={styles.statLabel}>{label}</Text>
             <Text style={styles.statValue}>{value}</Text>
@@ -230,10 +235,10 @@ export default function DashboardScreen() {
                     {/* Store overview */}
                     <Text style={styles.sectionTitle}>Store Overview</Text>
                     <View style={styles.statsGrid}>
-                        <StatCard icon="📊" iconBg={PURPLE_BG} label={"Total\nProducts"} value={0} />
-                        <StatCard icon="👁️" iconBg={RED_BG} label={"Store\nViews"} value={0} />
-                        <StatCard icon="💬" iconBg={GREEN_BG} label={"Whatsapp\nLead"} value={0} />
-                        <StatCard icon="❤️" iconBg={ORANGE_BG} label={"Likes\nReceived"} value={0} />
+                        <StatCard icon={require("../../assets/images/analytics-01.png")} iconBg={PURPLE_BG} label={"Total\nProducts"} value={0} />
+                        <StatCard icon={require("../../assets/images/view.png")} iconBg={RED_BG} label={"Store\nViews"} value={0} />
+                        <StatCard icon={require("../../assets/images/whatsapp.png")} iconBg={GREEN_BG} label={"Whatsapp\nLead"} value={0} />
+                        <StatCard icon={require("../../assets/images/favourite.png")} iconBg={ORANGE_BG} label={"Likes\nReceived"} value={0} />
                     </View>
 
                     <SetupProgress />
@@ -641,5 +646,13 @@ const styles = StyleSheet.create({
         color: "#9B9BAD",
         textAlign: "center",
         lineHeight: 20,
+    },
+    quickIconImage: {
+        width: 18,
+        height: 18,
+    },
+    statIconImage: {
+        width: 20,
+        height: 20,
     },
 });

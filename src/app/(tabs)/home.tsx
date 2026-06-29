@@ -1,20 +1,21 @@
 /* eslint-disable react-hooks/set-state-in-effect */
+import { auth, db } from "@/lib/firebase";
+import { Image } from "expo-image";
+import { useRouter } from "expo-router";
+import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
+import { useEffect, useState } from "react";
 import {
+    ActivityIndicator,
     Platform,
     SafeAreaView,
     ScrollView,
+    Share,
     StatusBar,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
-    ActivityIndicator
+    View
 } from "react-native";
-import { useEffect, useState } from "react";
-import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
-import { useRouter } from "expo-router";
-import { Colors } from "@/constants/theme";
 
 export default function UnpaidDashboard() {
     const router = useRouter();
@@ -47,34 +48,46 @@ export default function UnpaidDashboard() {
         fetchDashboardData();
     }, []);
 
+    const handleShareStore = async () => {
+        if (!userData?.storeSlug) return;
+        try {
+            await Share.share({
+                message: `Check out ${userData.businessName || 'my'} store on BiziLink! https://bizilink.ng/store/${userData.storeSlug}`,
+                url: `https://bizilink.ng/store/${userData.storeSlug}`,
+            });
+        } catch (error) {
+            console.error("Failed to share store", error);
+        }
+    };
+
     const stats = [
         {
             label: "Total\nProducts",
             value: productCount,
             bg: "#EEE9FB",
             iconBg: "#7B52E8",
-            icon: "▦",
+            icon: require("../../../assets/images/analytics-01.png"),
         },
         {
             label: "Store\nViews",
             value: userData?.views || 0,
             bg: "#FDE8E8",
             iconBg: "#E85252",
-            icon: "👁",
+            icon: require("../../../assets/images/view.png"),
         },
         {
             label: "Whatsapp\nLead",
             value: userData?.whatsappLeads || 0,
             bg: "#E5F7EE",
             iconBg: "#25D366",
-            icon: "💬",
+            icon: require("../../../assets/images/whatsapp.png"),
         },
         {
             label: "Likes\nReceived",
             value: userData?.likesReceived || 0,
             bg: "#FEF3E2",
             iconBg: "#F5A623",
-            icon: "♥",
+            icon: require("../../../assets/images/favourite.png"),
         },
     ];
 
@@ -141,7 +154,7 @@ export default function UnpaidDashboard() {
                                 <TouchableOpacity style={styles.activateBtn} onPress={() => router.push('/payment')}>
                                     <Text style={styles.activateBtnText}>Activate</Text>
                                 </TouchableOpacity>
-                                <Text style={styles.price}>₦800 / month</Text>
+                                <Text style={styles.price}>₦1000 / month</Text>
                             </View>
                         </View>
                     )}
@@ -149,9 +162,9 @@ export default function UnpaidDashboard() {
 
                 {/* ── Quick Actions ── */}
                 <View style={styles.actionsRow}>
-                    <TouchableOpacity 
-                        style={[styles.actionBtn, !isSubscribed && { opacity: 0.5 }]} 
-                        onPress={() => isSubscribed ? router.push('/add-Product/index' as any) : null} 
+                    <TouchableOpacity
+                        style={[styles.actionBtn, !isSubscribed && { opacity: 0.5 }]}
+                        onPress={() => isSubscribed ? router.push('/add-Product/index' as any) : null}
                         activeOpacity={0.8}
                     >
                         <View style={[styles.actionIcon, { backgroundColor: "#25C16F" }]}>
@@ -162,15 +175,19 @@ export default function UnpaidDashboard() {
 
                     <View style={styles.actionDivider} />
 
-                    <TouchableOpacity 
-                        style={styles.actionBtn} 
-                        onPress={() => router.push(`/store/${userData?.storeSlug}` as any)} 
+                    <TouchableOpacity
+                        style={styles.actionBtn}
+                        onPress={handleShareStore}
                         activeOpacity={0.8}
                     >
                         <View style={[styles.actionIcon, { backgroundColor: "#FEF0DC" }]}>
-                            <Text style={[styles.actionIconText, { color: "#F5A623" }]}>⛓</Text>
+                            <Image
+                                source={require('../../../assets/images/link-03.png')}
+                                style={styles.actionIconImage}
+                                contentFit="contain"
+                            />
                         </View>
-                        <Text style={styles.actionLabel}>View Store</Text>
+                        <Text style={styles.actionLabel}>Share Link</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -181,7 +198,7 @@ export default function UnpaidDashboard() {
                     {stats.map((stat) => (
                         <View key={stat.label} style={[styles.statCard, { backgroundColor: stat.bg }]}>
                             <View style={[styles.statIconCircle, { backgroundColor: stat.iconBg }]}>
-                                <Text style={styles.statIconText}>{stat.icon}</Text>
+                                <Image source={stat.icon} style={styles.statIconImage} contentFit="contain" />
                             </View>
                             <Text style={styles.statLabel}>{stat.label}</Text>
                             <Text style={styles.statValue}>{stat.value}</Text>
@@ -213,6 +230,7 @@ const styles = StyleSheet.create({
     safe: {
         flex: 1,
         backgroundColor: "#F7F7F9",
+        paddingTop: 30
     },
     scroll: {
         flex: 1,
@@ -517,5 +535,13 @@ const styles = StyleSheet.create({
         color: "#FFFFFF",
         fontSize: 13,
         fontWeight: "700",
+    },
+    actionIconImage: {
+        width: 22,
+        height: 22,
+    },
+    statIconImage: {
+        width: 20,
+        height: 20,
     },
 });

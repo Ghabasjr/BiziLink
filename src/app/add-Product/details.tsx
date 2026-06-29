@@ -25,11 +25,29 @@ export default function AddProductDetailsPage() {
       // Upload images to Firebase Storage
       const uploadedImageUrls = await Promise.all(
         data.images.map(async (uri: string, index: number) => {
-          const response = await fetch(uri);
-          const blob = await response.blob();
-          const imageRef = ref(storage, `products/${user.uid}/${Date.now()}_${index}`);
-          await uploadBytes(imageRef, blob);
-          return await getDownloadURL(imageRef);
+          const blob: any = await new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.onload = function () {
+              resolve(xhr.response);
+            };
+            xhr.onerror = function (e) {
+              console.log(e);
+              reject(new TypeError("Network request failed"));
+            };
+            xhr.responseType = "blob";
+            xhr.open("GET", uri, true);
+            xhr.send(null);
+          });
+
+          try {
+            const imageRef = ref(storage, `products/${user.uid}/${Date.now()}_${index}`);
+            await uploadBytes(imageRef, blob);
+            return await getDownloadURL(imageRef);
+          } finally {
+            if (blob && typeof blob.close === "function") {
+              blob.close();
+            }
+          }
         })
       );
 
@@ -45,7 +63,7 @@ export default function AddProductDetailsPage() {
       });
 
       Alert.alert("Success", "Product added successfully!");
-      router.replace("/(tabs)/index" as any);
+      router.replace("/(tabs)/home" as any);
     } catch (error: any) {
       Alert.alert("Error", error.message);
     } finally {

@@ -1,16 +1,16 @@
-import { useState } from 'react';
 import { Link, router } from 'expo-router';
-import { Pressable, StyleSheet, Text, View, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
+import { useState } from 'react';
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { auth, db } from '@/lib/firebase';
 import { AppButton } from '@/components/ui/app-button';
 import { AppTextInput } from '@/components/ui/app-text-input';
 import { GoogleMark } from '@/components/ui/google-mark';
 import { Colors, Fonts } from '@/constants/theme';
 import { useGoogleAuth } from '@/hooks/useGoogleAuth';
+import { auth, db } from '@/lib/firebase';
 
 export default function SignUpScreen() {
   const { signInWithGoogle } = useGoogleAuth();
@@ -32,7 +32,7 @@ export default function SignUpScreen() {
     try {
       setLoading(true);
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      
+
       // Initialize the user profile in Firestore
       await setDoc(doc(db, 'users', userCredential.user.uid), {
         id: userCredential.user.uid,
@@ -84,10 +84,10 @@ export default function SignUpScreen() {
             </View>
 
             <View style={styles.form}>
-              <AppTextInput 
-                placeholder="Full Name" 
-                textContentType="name" 
-                autoCapitalize="words" 
+              <AppTextInput
+                placeholder="Full Name"
+                textContentType="name"
+                autoCapitalize="words"
                 value={fullName}
                 onChangeText={setFullName}
               />
@@ -122,9 +122,9 @@ export default function SignUpScreen() {
               </Text>
             </Pressable>
 
-            <AppButton 
-              title={loading ? "Please wait..." : "Continue"} 
-              style={styles.continueButton} 
+            <AppButton
+              title={loading ? "Please wait..." : "Continue"}
+              style={styles.continueButton}
               onPress={handleSignup}
               disabled={loading}
             />
@@ -132,7 +132,7 @@ export default function SignUpScreen() {
             <Text style={styles.footerText}>
               Do you have an account?{' '}
               <Link href="/login" style={styles.footerLink}>
-                Log In
+                Login
               </Link>
             </Text>
           </View>

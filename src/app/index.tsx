@@ -7,16 +7,12 @@ import { AppButton } from '@/components/ui/app-button';
 import { Colors, Fonts } from '@/constants/theme';
 
 const collageImages = {
-  cap: '/images/cap.png',
-  sneakers:
-    '/images/sneakers.png',
-  watch:
-    '/images/watch.png',
-  fashion:
-    '/images/fashion.png',
-  bag: '/images/bag.png',
-  shirt:
-    '/images/shirt.png',
+  cap: require('../../assets/images/cap.png'),
+  sneakers: require('../../assets/images/sneakers.png'),
+  watch: require('../../assets/images/watch.png'),
+  fashion: require('../../assets/images/fashion.png'),
+  bag: require('../../assets/images/bag.png'),
+  shirt: require('../../assets/images/shirt.png'),
 };
 
 export default function HomeScreen() {
@@ -40,7 +36,7 @@ export default function HomeScreen() {
               style={styles.logoImage}
               contentFit="contain"
             />
-            <Text style={styles.logoText}>BiziLink</Text>
+            {/* <Text style={styles.logoText}>BiziLink</Text> */}
           </View>
 
           <Text style={styles.heading}>Your Business. Your Catalog. More Customers</Text>
@@ -59,10 +55,10 @@ export default function HomeScreen() {
   );
 }
 
-function ProductTile({ image, style }: { image: string; style: StyleProp<ViewStyle> }) {
+function ProductTile({ image, style }: { image: any; style: StyleProp<ViewStyle> }) {
   return (
     <View style={[styles.tile, style]}>
-      <Image source={{ uri: image }} style={styles.tileImage} contentFit="cover" />
+      <Image source={image} style={styles.tileImage} contentFit="cover" />
     </View>
   );
 }
@@ -155,9 +151,10 @@ const styles = StyleSheet.create({
     gap: 9,
   },
   logoImage: {
-    width: 44,
-    height: 44,
+    width: 268,
+    height: 78,
     borderRadius: 8,
+    top:30
   },
   logoText: {
     color: Colors.brand.primary,
@@ -186,6 +183,5 @@ const styles = StyleSheet.create({
   },
   continueButton: {
     alignSelf: 'stretch',
-    paddingBottom: 20,
   },
 });
