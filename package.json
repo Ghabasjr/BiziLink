@@ -6,6 +6,7 @@
     "@expo/ui": "~56.0.16",
     "@expo/vector-icons": "^15.1.1",
     "@react-native-async-storage/async-storage": "^3.1.1",
+    "@react-native-google-signin/google-signin": "^16.1.2",
     "country-state-city": "^3.2.1",
     "expo": "~56.0.9",
     "expo-auth-session": "~56.0.14",

@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { doc, updateDoc } from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import { useState } from "react";
 import { Alert } from "react-native";
 
@@ -27,14 +27,13 @@ export default function PaymentPage() {
             setIsSubmitting(true);
 
             // Convert local file URI to Blob using XMLHttpRequest
-            const blob: any = await new Promise((resolve, reject) => {
+            const blob: Blob = await new Promise((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
                 xhr.onload = function () {
-                    resolve(xhr.response);
+                    resolve(xhr.response as Blob);
                 };
-                xhr.onerror = function (e) {
-                    console.log(e);
-                    reject(new TypeError("Network request failed"));
+                xhr.onerror = function () {
+                    reject(new TypeError("Network request failed — could not read receipt file."));
                 };
                 xhr.responseType = "blob";
                 xhr.open("GET", receiptUri, true);
@@ -42,9 +41,26 @@ export default function PaymentPage() {
             });
 
             try {
-                // Upload receipt to Firebase Storage
+                // Determine MIME type from blob (fall back to image/jpeg)
+                // A missing content-type is a common cause of storage/unknown errors
+                const mimeType = blob.type || "image/jpeg";
+
+                // Upload receipt to Firebase Storage with an explicit content-type
                 const receiptRef = ref(storage, `receipts/${user.uid}/${Date.now()}`);
-                await uploadBytes(receiptRef, blob);
+                const uploadTask = uploadBytesResumable(blob, { contentType: mimeType });
+
+                await new Promise<void>((resolve, reject) => {
+                    uploadTask.on(
+                        "state_changed",
+                        null, // no progress tracking needed
+                        (error) => {
+                            console.error("Upload error:", error.code, error.message);
+                            reject(error);
+                        },
+                        () => resolve()
+                    );
+                });
+
                 const receiptUrl = await getDownloadURL(receiptRef);
 
                 // Update subscription status to 'pending' in Firestore
@@ -56,12 +72,16 @@ export default function PaymentPage() {
 
                 router.push("/pendingScreen");
             } finally {
-                if (blob && typeof blob.close === "function") {
-                    blob.close();
+                if (blob && typeof (blob as any).close === "function") {
+                    (blob as any).close();
                 }
             }
         } catch (error: any) {
-            Alert.alert("Error", error.message);
+            // Surface the Firebase error code when available for easier diagnosis
+            const message = error?.code
+                ? `Upload failed (${error.code}): ${error.message}`
+                : error?.message || "An unexpected error occurred.";
+            Alert.alert("Upload Error", message);
         } finally {
             setIsSubmitting(false);
         }

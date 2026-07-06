@@ -11,6 +11,7 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
+import { router } from "expo-router";
 
 const PURPLE = "#7B2FE0";
 const PURPLE_BG = "#EEE6FF";
@@ -97,14 +98,22 @@ function BusinessCard() {
 function QuickActions() {
     return (
         <View style={styles.quickCard}>
-            <TouchableOpacity style={styles.quickBtn} activeOpacity={0.75}>
+            <TouchableOpacity 
+                style={styles.quickBtn} 
+                activeOpacity={0.75}
+                onPress={() => router.push('/add-Product' as any)}
+            >
                 <View style={[styles.quickIcon, { backgroundColor: GREEN }]}>
                     <Text style={{ color: "#fff", fontSize: 20, fontWeight: "700" }}>+</Text>
                 </View>
                 <Text style={styles.quickText}>Add Product</Text>
             </TouchableOpacity>
             <View style={styles.quickDivider} />
-            <TouchableOpacity style={styles.quickBtn} activeOpacity={0.75}>
+            <TouchableOpacity 
+                style={styles.quickBtn} 
+                activeOpacity={0.75}
+                onPress={() => router.push('/share-link' as any)}
+            >
                 <View style={[styles.quickIcon, { backgroundColor: ORANGE_BG }]}>
                     <Image
                         source={require('../../assets/images/link-03.png')}

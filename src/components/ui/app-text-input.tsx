@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { forwardRef, useState } from 'react';
 import {
   Pressable,
@@ -39,13 +40,16 @@ export const AppTextInput = forwardRef<TextInput, AppTextInputProps>(function Ap
   const [secureEntry, setSecureEntry] = useState(secureTextEntry);
   const hasEyeIcon = showEyeIcon || showSecureToggle;
 
+  const eyeIconName = secureEntry ? 'eye-off-outline' : 'eye-outline';
+  const eyeIconColor = focused ? Colors.brand.primary : '#9A9AA5';
+
   return (
     <View style={[styles.container, containerStyle]}>
       {label ? <Text style={styles.label}>{label}</Text> : null}
       <View style={[styles.inputShell, focused && styles.focused, error && styles.errorInput]}>
         <TextInput
           ref={ref}
-          placeholderTextColor={Colors.brand.ink}
+          placeholderTextColor={'#A0A0A8'}
           secureTextEntry={secureEntry}
           style={[styles.input, hasEyeIcon && styles.inputWithIcon, style]}
           onBlur={(event) => {
@@ -65,10 +69,15 @@ export const AppTextInput = forwardRef<TextInput, AppTextInputProps>(function Ap
             hitSlop={12}
             disabled={!showSecureToggle}
             onPress={() => setSecureEntry((value) => !value)}
-            style={styles.eyeButton}>
-            <View style={styles.eyeOutline}>
-              <View style={styles.eyeDot} />
-            </View>
+            style={({ pressed }) => [
+              styles.eyeButton,
+              pressed && styles.eyeButtonPressed,
+            ]}>
+            <Ionicons
+              name={eyeIconName}
+              size={22}
+              color={eyeIconColor}
+            />
           </Pressable>
         ) : null}
       </View>
@@ -127,20 +136,9 @@ const styles = StyleSheet.create({
     height: 56,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: 8,
   },
-  eyeOutline: {
-    width: 20,
-    height: 13,
-    borderWidth: 2,
-    borderColor: '#15213B',
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  eyeDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: '#15213B',
+  eyeButtonPressed: {
+    opacity: 0.5,
   },
 });

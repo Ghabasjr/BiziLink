@@ -1,54 +1,52 @@
 import { Stack, router, useSegments } from 'expo-router';
-import { onAuthStateChanged } from 'firebase/auth';
+import * as SplashScreen from 'expo-splash-screen';
+import { onIdTokenChanged, signOut } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { auth, db } from '@/lib/firebase';
 
 export default function RootLayout() {
   const [checking, setChecking] = useState(true);
+  const [splashReady, setSplashReady] = useState(false); // true once the 3s splash finishes
   const [user, setUser] = useState<any>(null);
   const [userData, setUserData] = useState<any>(null);
   const [authLoaded, setAuthLoaded] = useState(false);
   const segments = useSegments() as any;
 
-  // Listen to Auth State
+  SplashScreen.preventAutoHideAsync().catch(() => { });
+
+  // Called by AnimatedSplashOverlay when its minimum display time (3s) is up
+  const handleSplashFinished = useCallback(() => {
+    setSplashReady(true);
+  }, []);
+
+
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (authUser) => {
-      setUser(authUser);
-      setAuthLoaded(true);
+    SplashScreen.hideAsync();
+  }, []);
+
+  // Listen to Auth State — use onIdTokenChanged so we also detect token expiry
+  useEffect(() => {
+    const unsub = onIdTokenChanged(auth, async (authUser) => {
       if (!authUser) {
+        // Token expired or user signed out — ensure clean sign-out
+        try {
+          await signOut(auth);
+        } catch (_) {
+          // already signed out, ignore
+        }
+        setUser(null);
+        setUserData(null);
         setChecking(false);
+      } else {
+        setUser(authUser);
       }
+      setAuthLoaded(true);
     });
     return unsub;
   }, []);
-
-  // Listen to Firestore Profile Data when user is logged in
-  // useEffect(() => {
-  //   if (!user) {
-  //     // eslint-disable-next-line react-hooks/set-state-in-effect
-  //     setUserData(null);
-  //     return;
-  //   }
-
-  //   const docUnsub = onSnapshot(doc(db, 'users', user.uid), (snap) => {
-  //     if (snap.exists()) {
-  //       setUserData(snap.data());
-  //     } else {
-  //       setUserData({}); // Non-null empty object if user profile doesn't exist yet
-  //     }
-  //     setChecking(false);
-  //   }, (err) => {
-  //     console.error("onSnapshot layout error:", err);
-  //     setUserData({});
-  //     setChecking(false);
-  //   });
-
-  //   return docUnsub;
-  // }, [user]);
-
 
   // Listen to Firestore Profile Data when user is logged in
   useEffect(() => {
@@ -61,8 +59,7 @@ export default function RootLayout() {
       if (snap.exists() && Object.keys(snap.data()).length > 0) {
         setUserData(snap.data());
       } else {
-        // Doc missing or empty — treat as genuinely incomplete profile,
-        // but only after we're sure the snapshot has settled.
+        // Doc missing or empty — treat as genuinely incomplete profile
         setUserData({});
       }
       setChecking(false);
@@ -76,17 +73,13 @@ export default function RootLayout() {
   }, [user]);
 
   // Handle Protected Routes & Navigation Decisions
-  // useEffect(() => {
-  //   if (!authLoaded) return;
-
-  // Handle Protected Routes & Navigation Decisions
+  // Guard runs only after BOTH auth is resolved AND the splash minimum timer is done
   useEffect(() => {
-    if (!authLoaded || checking) return;
+    if (!authLoaded || checking || !splashReady) return;
 
-    // Define public/onboarding routes that do not require login
+    const isIndexRoute = segments.length === 0 || segments[0] === 'index';
     const isPublicRoute =
-      segments.length === 0 ||
-      segments[0] === 'index' ||
+      isIndexRoute ||
       segments[0] === 'login' ||
       segments[0] === 'signup' ||
       segments[0] === 'forgot-password' ||
@@ -103,26 +96,22 @@ export default function RootLayout() {
       isBusinessInfoRoute || isBusinessRegisterRoute || isAccountCreatedRoute;
 
     if (!user) {
-      // Not logged in — redirect to /login only if they try to access a protected page
+      // Not logged in — redirect away from protected pages
       if (!isPublicRoute && !isOnboardingRoute) {
         router.replace('/login' as any);
       }
     } else {
-      // Logged in — wait for user profile data to be fetched from Firestore
+      // Logged in — if on the index/welcome screen, let the user tap Continue themselves
+      if (isIndexRoute) return;
+
+      // Wait for Firestore profile to be fetched
       if (userData === null) return;
 
       const hasBusinessName = !!(userData.businessName && userData.businessName.trim());
       const subStatus = userData.subscriptionStatus;
 
-      // if (!hasBusinessName) {
-      //   // User hasn't completed business info yet — only redirect if not already there
-      //   if (!isOnboardingRoute) {
-      //     router.replace('/businessInfoScreen' as any);
-      //   }
-
       if (!hasBusinessName) {
-        // Only redirect to businessInfoScreen if the user is NOT on any public/signup
-        // route OR onboarding route — prevents cold-start auto-redirects for new signups
+        // User hasn't completed business info — only redirect if not already on onboarding/public
         if (!isOnboardingRoute && !isPublicRoute) {
           router.replace('/businessInfoScreen' as any);
         }
@@ -132,37 +121,22 @@ export default function RootLayout() {
           router.replace('/pendingScreen' as any);
         }
       } else if (subStatus === 'active') {
-        // Fully registered — send to tabs if on public or onboarding page
+        // Fully active — send to tabs if on a public or onboarding page
         if (!isInsideTabs && (isPublicRoute || isOnboardingRoute)) {
           router.replace('/(tabs)/home' as any);
         }
       } else {
-        // Expired/unpaid — redirect to tabs only if they are on a public route (like index or login)
-        // This lets them stay on businessRegisterScreen onboarding without being redirected to tabs automatically
-        if (!isInsideTabs && isPublicRoute) {
-          router.replace('/(tabs)/home' as any);
+        // Expired / unpaid — redirect to reactivation flow, NOT straight into tabs
+        if (!isBusinessRegisterRoute && !isInsideTabs) {
+          router.replace('/businessRegisterScreen' as any);
         }
       }
     }
-  }, [authLoaded, user, userData, segments]);
+  }, [authLoaded, user, userData, segments, splashReady, checking]);
 
-  // if (checking) {
-  //   return (
-  //     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F7F7F9' }}>
-  //       <ActivityIndicator size="large" color="#6B3FE7" />
-  //     </View>
-  //   );
-  // }
-
-  // return (
-  //   <>
-  //     <AnimatedSplashOverlay />
-  //     <Stack screenOptions={{ headerShown: false }} />
-  //   </>
-  // );
-
-  if (checking) {
-    return <AnimatedSplashOverlay />;
+  // Show splash while auth is resolving OR while the 3s minimum hasn't elapsed
+  if (checking || !splashReady) {
+    return <AnimatedSplashOverlay onFinished={handleSplashFinished} />;
   }
 
   return (

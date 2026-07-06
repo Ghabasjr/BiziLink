@@ -177,7 +177,7 @@ export default function UnpaidDashboard() {
 
                     <TouchableOpacity
                         style={styles.actionBtn}
-                        onPress={handleShareStore}
+                        onPress={() => router.push('/share-link' as any)}
                         activeOpacity={0.8}
                     >
                         <View style={[styles.actionIcon, { backgroundColor: "#FEF0DC" }]}>

@@ -21,6 +21,7 @@ export default function SignUpScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleSignup = async () => {
+    console.log('SIGNUP TAPPED — current auth user:', auth.currentUser?.uid);
     if (!fullName || !email || !password) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
@@ -54,7 +55,8 @@ export default function SignUpScreen() {
     <SafeAreaView style={styles.screen}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'android' ? 0 : 0}
       >
         <ScrollView
           contentContainerStyle={styles.scrollContent}
@@ -103,6 +105,7 @@ export default function SignUpScreen() {
                 placeholder="Create Password"
                 textContentType="newPassword"
                 secureTextEntry
+                showSecureToggle
                 value={password}
                 onChangeText={setPassword}
               />

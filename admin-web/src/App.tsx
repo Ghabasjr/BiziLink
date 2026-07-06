@@ -1,34 +1,34 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  signInWithEmailAndPassword, 
-  signOut, 
-  onAuthStateChanged
-} from 'firebase/auth';
 import type { User } from 'firebase/auth';
-import { 
-  collection, 
-  doc, 
-  updateDoc,
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut
+} from 'firebase/auth';
+import {
+  collection,
+  doc,
   getDoc,
-  onSnapshot
+  onSnapshot,
+  updateDoc
 } from 'firebase/firestore';
-import { auth, db } from './firebase';
-import { 
-  Search, 
-  LogOut, 
-  AlertTriangle, 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
-  Maximize2,
-  Phone,
-  MessageSquare,
+import {
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  FileText,
   Globe,
+  LogOut,
   Mail,
-  User as UserIcon,
+  Maximize2,
+  MessageSquare,
+  Phone,
+  Search,
   Shield,
-  FileText
+  User as UserIcon,
+  XCircle
 } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { auth, db } from './firebase';
 
 interface UserProfile {
   id: string;
@@ -55,7 +55,7 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [authLoading, setAuthLoading] = useState<boolean>(true);
-  
+
   // Login form state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -66,7 +66,7 @@ export default function App() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [dataLoading, setDataLoading] = useState<boolean>(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  
+
   // Filter & Search states
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'active' | 'expired'>('pending');
@@ -90,7 +90,7 @@ export default function App() {
           // Verify user role in Firestore
           const userDoc = await getDoc(doc(db, 'users', user.uid));
           const userData = userDoc.data();
-          
+
           if (userDoc.exists() && userData?.role === 'admin') {
             setCurrentUser(user);
             setIsAdmin(true);
@@ -116,7 +116,6 @@ export default function App() {
 
     return unsubscribe;
   }, []);
-
   // Listen for Realtime users updates when admin is validated
   useEffect(() => {
     if (!isAdmin || !currentUser) return;
@@ -238,7 +237,7 @@ export default function App() {
       if (activeTab !== 'all' && u.subscriptionStatus !== activeTab) {
         return false;
       }
-      
+
       // Search filter
       if (searchQuery.trim() !== '') {
         const queryText = searchQuery.toLowerCase();
@@ -248,7 +247,7 @@ export default function App() {
         const matchesSlug = u.storeSlug?.toLowerCase().includes(queryText);
         return matchesName || matchesBusiness || matchesEmail || matchesSlug;
       }
-      
+
       return true;
     });
   }, [users, activeTab, searchQuery]);
@@ -275,36 +274,36 @@ export default function App() {
           </div>
           <h1 className="auth-logo">BiziLink</h1>
           <p className="auth-subtitle">Super Admin Access Portal</p>
-          
+
           {loginError && <div className="error-alert">{loginError}</div>}
-          
+
           <form onSubmit={handleLogin}>
             <div className="form-group">
               <label className="form-label">Admin Email</label>
-              <input 
-                type="email" 
-                className="form-input" 
+              <input
+                type="email"
+                className="form-input"
                 placeholder="admin@bizilink.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
-            
+
             <div className="form-group">
               <label className="form-label">Password</label>
-              <input 
-                type="password" 
-                className="form-input" 
+              <input
+                type="password"
+                className="form-input"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </div>
-            
-            <button 
-              type="submit" 
+
+            <button
+              type="submit"
               className="auth-btn"
               disabled={loginSubmitting}
             >
@@ -390,25 +389,25 @@ export default function App() {
         {/* Filters and search section */}
         <div className="controls-bar">
           <div className="tabs-group">
-            <button 
+            <button
               className={`tab-btn ${activeTab === 'pending' ? 'active' : ''}`}
               onClick={() => setActiveTab('pending')}
             >
               Pending ({stats.pending})
             </button>
-            <button 
+            <button
               className={`tab-btn ${activeTab === 'active' ? 'active' : ''}`}
               onClick={() => setActiveTab('active')}
             >
               Active ({stats.active})
             </button>
-            <button 
+            <button
               className={`tab-btn ${activeTab === 'expired' ? 'active' : ''}`}
               onClick={() => setActiveTab('expired')}
             >
               Expired ({stats.expired})
             </button>
-            <button 
+            <button
               className={`tab-btn ${activeTab === 'all' ? 'active' : ''}`}
               onClick={() => setActiveTab('all')}
             >
@@ -418,9 +417,9 @@ export default function App() {
 
           <div className="search-wrapper">
             <Search className="search-icon" size={18} />
-            <input 
-              type="text" 
-              className="search-input" 
+            <input
+              type="text"
+              className="search-input"
               placeholder="Search by store slug, business name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -440,8 +439,8 @@ export default function App() {
               {activeTab === 'pending' ? '🎉' : '📂'}
             </div>
             <h4 className="empty-title">
-              {activeTab === 'pending' 
-                ? 'All Clear!' 
+              {activeTab === 'pending'
+                ? 'All Clear!'
                 : 'No accounts found'}
             </h4>
             <p className="empty-text">
@@ -454,14 +453,14 @@ export default function App() {
           <div className="dashboard-grid">
             {filteredUsers.map((user) => {
               const isActing = actionLoading === user.id;
-              const formattedDate = user.receiptSubmittedAt 
+              const formattedDate = user.receiptSubmittedAt
                 ? new Date(user.receiptSubmittedAt).toLocaleString('en-NG', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })
                 : '—';
 
               return (
@@ -495,9 +494,9 @@ export default function App() {
                     {user.whatsappNumber && (
                       <div className="info-item">
                         <MessageSquare size={14} />
-                        <a 
-                          href={`https://wa.me/${user.whatsappNumber.replace(/\D/g, '')}`} 
-                          target="_blank" 
+                        <a
+                          href={`https://wa.me/${user.whatsappNumber.replace(/\D/g, '')}`}
+                          target="_blank"
                           rel="noreferrer"
                           style={{ color: 'var(--primary)', textDecoration: 'none' }}
                         >
@@ -521,13 +520,13 @@ export default function App() {
                   <div className="receipt-section">
                     <h5 className="receipt-title">Payment Evidence</h5>
                     {user.receiptUrl ? (
-                      <div 
+                      <div
                         className="receipt-preview-box"
                         onClick={() => setZoomedReceipt(user.receiptUrl || null)}
                       >
-                        <img 
-                          src={user.receiptUrl} 
-                          alt="Transaction receipt" 
+                        <img
+                          src={user.receiptUrl}
+                          alt="Transaction receipt"
                           className="receipt-img"
                           onError={(e) => {
                             // If load fails, hide image and show placeholder text
@@ -558,15 +557,15 @@ export default function App() {
                   {/* Actions (Only show for pending users) */}
                   {user.subscriptionStatus === 'pending' && (
                     <div className="action-row">
-                      <button 
-                        className="card-btn reject" 
+                      <button
+                        className="card-btn reject"
                         disabled={isActing}
                         onClick={() => handleReject(user.id, user.fullName)}
                       >
                         Reject
                       </button>
-                      <button 
-                        className="card-btn approve" 
+                      <button
+                        className="card-btn approve"
                         disabled={isActing}
                         onClick={() => handleActivate(user.id, user.fullName)}
                       >
@@ -574,7 +573,7 @@ export default function App() {
                       </button>
                     </div>
                   )}
-                  
+
                   {/* Metadata display for activated/rejected cards */}
                   {user.subscriptionStatus === 'active' && user.activatedAt && (
                     <div style={{ marginTop: 'auto', fontSize: '11px', color: 'var(--status-active)', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -582,7 +581,7 @@ export default function App() {
                       <span>Approved on: {new Date(user.activatedAt).toLocaleDateString()}</span>
                     </div>
                   )}
-                  
+
                   {user.subscriptionStatus === 'expired' && user.rejectedAt && (
                     <div style={{ marginTop: 'auto', fontSize: '11px', color: 'var(--status-expired)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <XCircle size={12} />
