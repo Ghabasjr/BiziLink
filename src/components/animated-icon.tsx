@@ -1,8 +1,7 @@
 import { Image } from 'expo-image';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Dimensions, StyleSheet, View } from 'react-native';
 import Animated, { Easing, Keyframe } from 'react-native-reanimated';
-import { scheduleOnRN } from 'react-native-worklets';
 
 const INITIAL_SCALE_FACTOR = Dimensions.get('screen').height / 90;
 const DURATION = 600;
@@ -14,30 +13,14 @@ interface SplashProps {
 
 export function AnimatedSplashOverlay({ onFinished }: SplashProps) {
   const [visible, setVisible] = useState(true);
-  // Track whether the minimum time has elapsed and whether the animation is done
-  const minTimerDone = useRef(false);
-  const animDone = useRef(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      minTimerDone.current = true;
-      // If the animation already finished, now we can hide
-      if (animDone.current) {
-        setVisible(false);
-        onFinished?.();
-      }
+      setVisible(false);
+      onFinished?.();
     }, MIN_SPLASH_MS);
     return () => clearTimeout(timer);
   }, [onFinished]);
-
-  const handleAnimFinished = () => {
-    animDone.current = true;
-    // Only hide once the minimum timer has also elapsed
-    if (minTimerDone.current) {
-      setVisible(false);
-      onFinished?.();
-    }
-  };
 
   if (!visible) return null;
 
@@ -49,12 +32,7 @@ export function AnimatedSplashOverlay({ onFinished }: SplashProps) {
 
   return (
     <Animated.View
-      entering={splashKeyframe.duration(600).withCallback((finished) => {
-        'worklet';
-        if (finished) {
-          scheduleOnRN(handleAnimFinished);
-        }
-      })}
+      entering={splashKeyframe.duration(600)}
       style={styles.backgroundSolidColor}
     >
       <Image

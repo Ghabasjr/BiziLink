@@ -47,7 +47,7 @@ export default function PaymentPage() {
 
                 // Upload receipt to Firebase Storage with an explicit content-type
                 const receiptRef = ref(storage, `receipts/${user.uid}/${Date.now()}`);
-                const uploadTask = uploadBytesResumable(blob, { contentType: mimeType });
+                const uploadTask = uploadBytesResumable(receiptRef, blob, { contentType: mimeType });
 
                 await new Promise<void>((resolve, reject) => {
                     uploadTask.on(

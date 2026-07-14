@@ -158,7 +158,7 @@ export default function BusinessInfoScreen() {
                                 try {
                                     await signOut(auth);
                                     router.replace('/' as any);
-                                } catch (error: any) {
+                                } catch {
                                     router.replace('/' as any);
                                 }
                             }} 

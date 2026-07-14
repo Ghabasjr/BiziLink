@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 import { auth, db } from "@/lib/firebase";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
@@ -177,7 +176,7 @@ export default function UnpaidDashboard() {
 
                     <TouchableOpacity
                         style={styles.actionBtn}
-                        onPress={() => router.push('/share-link' as any)}
+                        onPress={handleShareStore}
                         activeOpacity={0.8}
                     >
                         <View style={[styles.actionIcon, { backgroundColor: "#FEF0DC" }]}>

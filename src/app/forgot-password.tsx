@@ -1,16 +1,20 @@
 import { AppButton } from "@/components/ui/app-button";
 import { AppTextInput } from "@/components/ui/app-text-input";
+import { auth } from "@/lib/firebase";
+import { router } from "expo-router";
+import { sendPasswordResetEmail } from "firebase/auth";
 import { useState } from "react";
 import {
+    Alert,
+    KeyboardAvoidingView,
     Platform,
     SafeAreaView,
     StatusBar,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View
+    View,
 } from "react-native";
-
 
 interface Props {
     onBack?: () => void;
@@ -19,75 +23,96 @@ interface Props {
 
 export default function ForgotPasswordScreen({ onBack, onContinue }: Props) {
     const [value, setValue] = useState("");
+    const [loading, setLoading] = useState(false);
+
+    const handleBack = () => {
+        if (onBack) {
+            onBack();
+            return;
+        }
+
+        router.back();
+    };
+
+    const handleContinue = async () => {
+        const email = value.trim();
+
+        if (!email) {
+            Alert.alert("Error", "Please enter your email address");
+            return;
+        }
+
+        try {
+            setLoading(true);
+            await sendPasswordResetEmail(auth, email);
+            Alert.alert("Password Reset", "Check your email for a password reset link.");
+            onContinue?.(email);
+        } catch (error: any) {
+            Alert.alert("Password Reset Failed", error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <SafeAreaView style={styles.safe}>
             <StatusBar barStyle="dark-content" backgroundColor="#F5F5F8" />
-
-            {/* ── Header ── */}
-            <View style={styles.header}>
-                <TouchableOpacity style={styles.backIcon} onPress={onBack} activeOpacity={0.7}>
-                    <Text style={styles.backIconText}>‹</Text>
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Forgot Password</Text>
-                {/* spacer keeps title centered */}
-                <View style={styles.backIcon} />
-            </View>
-
-            {/* ── Body ── */}
-            <View style={styles.body}>
-                {/* Icon circle */}
-                <View style={styles.iconCircle}>
-                    {/* Document with check — drawn with nested Views + Text */}
-                    <View style={styles.docIcon}>
-                        {/* document body */}
-                        <View style={styles.docBody}>
-                            {/* lines on doc */}
-                            <View style={[styles.docLine, { width: 18, marginTop: 6 }]} />
-                            <View style={[styles.docLine, { width: 14, marginTop: 4 }]} />
-                        </View>
-                        {/* check badge */}
-                        <View style={styles.checkBadge}>
-                            <Text style={styles.checkMark}>✓</Text>
-                        </View>
-                    </View>
+            <KeyboardAvoidingView
+                style={styles.keyboardView}
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+            >
+                <View style={styles.header}>
+                    <TouchableOpacity style={styles.backIcon} onPress={handleBack} activeOpacity={0.7}>
+                        <Text style={styles.backIconText}>‹</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>Forgot Password</Text>
+                    <View style={styles.backIcon} />
                 </View>
 
-                {/* Heading */}
-                <Text style={styles.title}>Retrieve your password</Text>
-                <Text style={styles.subtitle}>Let help you retrieve your password</Text>
+                <View style={styles.body}>
+                    <View style={styles.iconCircle}>
+                        <View style={styles.docIcon}>
+                            <View style={styles.docBody}>
+                                <View style={[styles.docLine, { width: 18, marginTop: 6 }]} />
+                                <View style={[styles.docLine, { width: 14, marginTop: 4 }]} />
+                            </View>
+                            <View style={styles.checkBadge}>
+                                <Text style={styles.checkMark}>✓</Text>
+                            </View>
+                        </View>
+                    </View>
 
-                {/* Divider */}
-                <View style={styles.divider} />
+                    <Text style={styles.title}>Retrieve your password</Text>
+                    <Text style={styles.subtitle}>Let us help you retrieve your password</Text>
 
-                {/* Input */}
-                <AppTextInput
-                    style={styles.input}
-                    placeholder="Email/Phone number"
-                    // placeholderTextColor="#AAAAAA"
-                    value={value}
-                    onChangeText={setValue}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                />
-            </View>
+                    <View style={styles.divider} />
 
-            {/* ── Footer ── */}
-            <View style={styles.footer}>
-                <TouchableOpacity
-                    style={[styles.continueBtn, !value && styles.continueBtnDisabled]}
-                    onPress={() => value && onContinue?.(value)}
-                    activeOpacity={0.85}
-                >
-                    <Text style={styles.continueBtnText}>Continue</Text>
-                </TouchableOpacity>
-                {/* <AppButton title="Continue" /> */}
+                    <AppTextInput
+                        containerStyle={styles.inputContainer}
+                        style={styles.input}
+                        placeholder="Email address"
+                        value={value}
+                        onChangeText={setValue}
+                        keyboardType="email-address"
+                        textContentType="emailAddress"
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                    />
+                </View>
 
-                <TouchableOpacity onPress={onBack} activeOpacity={0.7}>
-                    <Text style={styles.backText}>Back</Text>
-                </TouchableOpacity>
-            </View>
+                <View style={styles.footer}>
+                    <AppButton
+                        title={loading ? "Please wait..." : "Continue"}
+                        style={styles.continueBtn}
+                        onPress={handleContinue}
+                        disabled={!value.trim() || loading}
+                    />
+
+                    <TouchableOpacity onPress={handleBack} activeOpacity={0.7}>
+                        <Text style={styles.backText}>Back</Text>
+                    </TouchableOpacity>
+                </View>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }
@@ -99,10 +124,11 @@ const styles = StyleSheet.create({
     safe: {
         flex: 1,
         backgroundColor: "#F5F5F8",
-        paddingTop:50
+        paddingTop: 50,
     },
-
-    // ── Header ─
+    keyboardView: {
+        flex: 1,
+    },
     header: {
         flexDirection: "row",
         alignItems: "center",
@@ -135,18 +161,13 @@ const styles = StyleSheet.create({
         fontSize: 17,
         fontWeight: "600",
         color: "#1A1A1A",
-        letterSpacing: 0.2,
     },
-
-    // ── Body ────
     body: {
         flex: 1,
         alignItems: "center",
-        // paddingHorizontal: 24,
+        paddingHorizontal: 24,
         paddingTop: 40,
     },
-
-    // Icon circle
     iconCircle: {
         width: 90,
         height: 90,
@@ -197,8 +218,6 @@ const styles = StyleSheet.create({
         fontWeight: "700",
         lineHeight: 13,
     },
-
-    // Text
     title: {
         fontSize: 20,
         fontWeight: "700",
@@ -212,26 +231,19 @@ const styles = StyleSheet.create({
         textAlign: "center",
         marginBottom: 24,
     },
-
     divider: {
         width: "70%",
         height: 1,
         backgroundColor: "#E0E0E0",
         marginBottom: 32,
     },
-
-    // Input
-    input: {
+    inputContainer: {
         width: "100%",
-        height: 56,
-        borderRadius: 12,
-        backgroundColor: "#EBEBEB",
-        paddingHorizontal: 18,
+    },
+    input: {
         fontSize: 15,
         color: "#1A1A1A",
     },
-
-    // ── Footer ──
     footer: {
         paddingHorizontal: 24,
         paddingBottom: Platform.OS === "android" ? 55 : 16,
@@ -240,25 +252,12 @@ const styles = StyleSheet.create({
     },
     continueBtn: {
         width: "100%",
-        height: 58,
         borderRadius: 999,
-        backgroundColor: PURPLE,
-        alignItems: "center",
-        justifyContent: "center",
         shadowColor: PURPLE,
         shadowOpacity: 0.35,
         shadowRadius: 12,
         shadowOffset: { width: 0, height: 6 },
         elevation: 6,
-    },
-    continueBtnDisabled: {
-        opacity: 0.7,
-    },
-    continueBtnText: {
-        color: "#FFFFFF",
-        fontSize: 16,
-        fontWeight: "700",
-        letterSpacing: 0.3,
     },
     backText: {
         fontSize: 15,

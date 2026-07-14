@@ -21,9 +21,15 @@ export default function SignUpScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleSignup = async () => {
-    console.log('SIGNUP TAPPED — current auth user:', auth.currentUser?.uid);
-    if (!fullName || !email || !password) {
+    const normalizedName = fullName.trim();
+    const normalizedEmail = email.trim();
+
+    if (!normalizedName || !normalizedEmail || !password) {
       Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+    if (password.length < 6) {
+      Alert.alert('Error', 'Password must be at least 6 characters');
       return;
     }
     if (!acceptedTerms) {
@@ -32,18 +38,18 @@ export default function SignUpScreen() {
     }
     try {
       setLoading(true);
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, password);
 
       // Initialize the user profile in Firestore
       await setDoc(doc(db, 'users', userCredential.user.uid), {
         id: userCredential.user.uid,
-        fullName,
-        email,
+        fullName: normalizedName,
+        email: normalizedEmail,
         subscriptionStatus: 'expired',
         createdAt: new Date().toISOString()
-      });
+      }, { merge: true });
 
-      router.push('/businessInfoScreen');
+      router.replace('/businessInfoScreen');
     } catch (error: any) {
       Alert.alert('Signup Failed', error.message);
     } finally {

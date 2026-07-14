@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState } from "react";
 import { Image } from "expo-image";
 import {
@@ -7,7 +6,6 @@ import {
     StyleSheet,
     ScrollView,
     ActivityIndicator,
-    TouchableOpacity,
     Platform,
     StatusBar,
 } from "react-native";
@@ -71,7 +69,7 @@ export default function InsightScreen() {
                 const list: Interest[] = [];
                 iSnap.forEach((d) => list.push({ id: d.id, ...d.data() } as Interest));
                 setInterests(list);
-            } catch (e) {
+            } catch {
                 // Firestore index might not be created yet — silently handle
             } finally {
                 setLoading(false);

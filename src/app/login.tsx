@@ -1,4 +1,4 @@
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -17,32 +17,18 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // const handleLogin = async () => {
-  //   if (!email || !password) {
-  //     Alert.alert('Error', 'Please enter email and password');
-  //     return;
-  //   }
-  //   try {
-  //     setLoading(true);
-  //     await signInWithEmailAndPassword(auth, email, password);
-  //     router.replace('/(tabs)/home' as any);
-  //   } catch (error: any) {
-  //     Alert.alert('Login Failed', error.message);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
   const handleLogin = async () => {
-    if (!email || !password) {
+    const normalizedEmail = email.trim();
+
+    if (!normalizedEmail || !password) {
       Alert.alert('Error', 'Please enter email and password');
       return;
     }
     try {
       setLoading(true);
-      await signInWithEmailAndPassword(auth, email, password);
-      // No manual redirect — the root layout's navigation effect
-      // handles routing based on the user's profile state.
+      await signInWithEmailAndPassword(auth, normalizedEmail, password);
+      router.replace('/(tabs)/home' as any);
     } catch (error: any) {
       Alert.alert('Login Failed', error.message);
     } finally {

@@ -34,7 +34,7 @@ export default function RootLayout() {
         // Token expired or user signed out — ensure clean sign-out
         try {
           await signOut(auth);
-        } catch (_) {
+        } catch {
           // already signed out, ignore
         }
         setUser(null);
@@ -51,7 +51,6 @@ export default function RootLayout() {
   // Listen to Firestore Profile Data when user is logged in
   useEffect(() => {
     if (!user) {
-      setUserData(null);
       return;
     }
 
@@ -126,8 +125,10 @@ export default function RootLayout() {
           router.replace('/(tabs)/home' as any);
         }
       } else {
-        // Expired / unpaid — redirect to reactivation flow, NOT straight into tabs
-        if (!isBusinessRegisterRoute && !isInsideTabs) {
+        // Expired / unpaid users can still reach the dashboard, where upgrade prompts live.
+        if (!isInsideTabs && (isPublicRoute || isOnboardingRoute)) {
+          router.replace('/(tabs)/home' as any);
+        } else if (!isBusinessRegisterRoute && !isInsideTabs) {
           router.replace('/businessRegisterScreen' as any);
         }
       }

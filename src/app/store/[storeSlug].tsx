@@ -2,14 +2,12 @@ import { useEffect, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
-    FlatList,
     Image,
     Linking,
     Modal,
     Platform,
     SafeAreaView,
     ScrollView,
-    Share,
     StatusBar,
     StyleSheet,
     Text,
@@ -60,25 +58,18 @@ const STORE_BRANDS: StoreBrand[] = [
 
 export default function StorefrontPage() {
     const { storeSlug, brand } = useLocalSearchParams<{ storeSlug: string; brand?: string }>();
+    const initialBrand = Array.isArray(brand) ? brand[0] : brand;
     const [business, setBusiness] = useState<Business | null>(null);
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
 
     // Brand Selection & Filter State
-    const [selectedBrand, setSelectedBrand] = useState("Men Lace");
-    const [tempSelectedBrand, setTempSelectedBrand] = useState("Men Lace");
+    const [selectedBrand, setSelectedBrand] = useState(initialBrand || "Men Lace");
+    const [tempSelectedBrand, setTempSelectedBrand] = useState(initialBrand || "Men Lace");
     const [brandModalOpen, setBrandModalOpen] = useState(false);
 
     // Likes tracking
     const [likedProducts, setLikedProducts] = useState<Record<string, boolean>>({});
-
-    useEffect(() => {
-        // Set initial brand from query params if available
-        if (brand) {
-            setSelectedBrand(brand);
-            setTempSelectedBrand(brand);
-        }
-    }, [brand]);
 
     useEffect(() => {
         const fetchStore = async () => {
@@ -274,7 +265,7 @@ export default function StorefrontPage() {
                             <Text style={styles.emptyIcon}>📦</Text>
                             <Text style={styles.emptyTitle}>No products found</Text>
                             <Text style={styles.emptySub}>
-                                There are no products currently available under "{selectedBrand}".
+                                There are no products currently available under &quot;{selectedBrand}&quot;.
                             </Text>
                         </View>
                     ) : (
@@ -395,7 +386,6 @@ export default function StorefrontPage() {
 }
 
 const PURPLE = "#6B3FE7";
-const PURPLE_LIGHT = "#EDE8FC";
 
 const styles = StyleSheet.create({
     safe: {
