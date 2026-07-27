@@ -29,18 +29,15 @@ export default function RootLayout() {
 
   // Listen to Auth State — use onIdTokenChanged so we also detect token expiry
   useEffect(() => {
+    console.log('[Layout Auth] Subscribing to onIdTokenChanged');
     const unsub = onIdTokenChanged(auth, async (authUser) => {
       if (!authUser) {
-        // Token expired or user signed out — ensure clean sign-out
-        try {
-          await signOut(auth);
-        } catch {
-          // already signed out, ignore
-        }
+        console.log('[Layout Auth] User signed out or no active auth user');
         setUser(null);
         setUserData(null);
         setChecking(false);
       } else {
+        console.log('[Layout Auth] Authenticated user detected:', authUser.uid, authUser.email);
         setUser(authUser);
       }
       setAuthLoaded(true);
@@ -51,20 +48,24 @@ export default function RootLayout() {
   // Listen to Firestore Profile Data when user is logged in
   useEffect(() => {
     if (!user) {
+      console.log('[Layout Firestore] No logged in user, skipping snapshot listener');
       return;
     }
 
+    console.log('[Layout Firestore] Subscribing to profile doc for user:', user.uid);
     const docUnsub = onSnapshot(doc(db, 'users', user.uid), (snap) => {
       if (snap.exists() && Object.keys(snap.data()).length > 0) {
-        setUserData(snap.data());
+        const data = snap.data();
+        console.log('[Layout Firestore] Received user profile update:', data);
+        setUserData(data);
       } else {
-        // Doc missing or empty — treat as genuinely incomplete profile
+        console.log('[Layout Firestore] User doc missing or empty in Firestore');
         setUserData({});
       }
       setChecking(false);
     }, (err) => {
-      console.error("onSnapshot layout error:", err);
-      setUserData({});
+      console.error("[Layout Firestore] onSnapshot error:", err);
+      setUserData((prev: any) => prev || {});
       setChecking(false);
     });
 
@@ -74,7 +75,18 @@ export default function RootLayout() {
   // Handle Protected Routes & Navigation Decisions
   // Guard runs only after BOTH auth is resolved AND the splash minimum timer is done
   useEffect(() => {
-    if (!authLoaded || checking || !splashReady) return;
+    if (!authLoaded || checking || !splashReady) {
+      console.log('[Layout Navigation] Waiting for ready states:', { authLoaded, checking, splashReady });
+      return;
+    }
+
+    const currentSegment = segments.join('/') || 'index';
+    console.log('[Layout Navigation] Evaluating route guard for segment:', currentSegment, {
+      userId: user?.uid,
+      hasUserData: !!userData,
+      businessName: userData?.businessName,
+      subscriptionStatus: userData?.subscriptionStatus,
+    });
 
     const isIndexRoute = segments.length === 0 || segments[0] === 'index';
     const isPublicRoute =
@@ -97,6 +109,7 @@ export default function RootLayout() {
     if (!user) {
       // Not logged in — redirect away from protected pages
       if (!isPublicRoute && !isOnboardingRoute) {
+        console.log('[Layout Navigation] Unauthenticated user accessing protected route. Redirecting to /login');
         router.replace('/login' as any);
       }
     } else {
@@ -104,32 +117,31 @@ export default function RootLayout() {
       if (isIndexRoute) return;
 
       // Wait for Firestore profile to be fetched
-      if (userData === null) return;
+      if (userData === null) {
+        console.log('[Layout Navigation] Profile data is still loading');
+        return;
+      }
 
       const hasBusinessName = !!(userData.businessName && userData.businessName.trim());
-      const subStatus = userData.subscriptionStatus;
+      const subStatus = userData.subscriptionStatus || 'active';
 
       if (!hasBusinessName) {
         // User hasn't completed business info — only redirect if not already on onboarding/public
-        if (!isOnboardingRoute && !isPublicRoute) {
+        if (!isBusinessInfoRoute) {
+          console.log('[Layout Navigation] Missing businessName. Redirecting to /businessInfoScreen');
           router.replace('/businessInfoScreen' as any);
         }
       } else if (subStatus === 'pending') {
         // Subscription verification is pending
         if (!isPendingRoute) {
+          console.log('[Layout Navigation] Subscription pending. Redirecting to /pendingScreen');
           router.replace('/pendingScreen' as any);
         }
-      } else if (subStatus === 'active') {
-        // Fully active — send to tabs if on a public or onboarding page
-        if (!isInsideTabs && (isPublicRoute || isOnboardingRoute)) {
-          router.replace('/(tabs)/home' as any);
-        }
       } else {
-        // Expired / unpaid users can still reach the dashboard, where upgrade prompts live.
+        // Active / Expired — send to tabs if currently on public or onboarding page
         if (!isInsideTabs && (isPublicRoute || isOnboardingRoute)) {
+          console.log('[Layout Navigation] Setup complete with status:', subStatus, '. Redirecting to /(tabs)/home');
           router.replace('/(tabs)/home' as any);
-        } else if (!isBusinessRegisterRoute && !isInsideTabs) {
-          router.replace('/businessRegisterScreen' as any);
         }
       }
     }

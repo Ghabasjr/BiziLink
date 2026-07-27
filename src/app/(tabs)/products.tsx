@@ -30,20 +30,26 @@ interface Product {
 export default function ProductsScreen() {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
-    const [subscriptionStatus, setSubscriptionStatus] = useState<string>("expired");
+    const [subscriptionStatus, setSubscriptionStatus] = useState<string>("active");
     const router = useRouter();
 
     const fetchProducts = async () => {
         const user = auth.currentUser;
-        if (!user) return;
+        if (!user) {
+            console.log('[ProductsTab] No logged in user found');
+            return;
+        }
         
         try {
             setLoading(true);
+            console.log('[ProductsTab] Fetching subscription status and products for UID:', user.uid);
             
             // Check subscription status
             const userDoc = await getDoc(doc(db, "users", user.uid));
             if (userDoc.exists()) {
-                setSubscriptionStatus(userDoc.data()?.subscriptionStatus || "expired");
+                const status = userDoc.data()?.subscriptionStatus || "active";
+                console.log('[ProductsTab] User subscription status:', status);
+                setSubscriptionStatus(status);
             }
 
             const q = query(collection(db, "products"), where("storeId", "==", user.uid));

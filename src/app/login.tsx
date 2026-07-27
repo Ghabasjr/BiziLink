@@ -20,18 +20,62 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     const normalizedEmail = email.trim();
+    console.log('[Login] Email/password login submitted', { email: normalizedEmail });
 
     if (!normalizedEmail || !password) {
+      console.log('[Login] Validation failed: missing email or password');
       Alert.alert('Error', 'Please enter email and password');
       return;
     }
     try {
       setLoading(true);
-      await signInWithEmailAndPassword(auth, normalizedEmail, password);
-      router.replace('/(tabs)/home' as any);
+      console.log('[Login] Signing in with Firebase');
+      const userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, password);
+      console.log('[Login] Firebase login successful', { uid: userCredential.user.uid });
+      Alert.alert('Login Successful', 'You have logged in successfully.', [
+        {
+          text: 'Continue',
+          onPress: () => {
+            console.log('[Login] Navigating to dashboard');
+            router.replace('/(tabs)/home' as any);
+          },
+        },
+      ]);
     } catch (error: any) {
-      Alert.alert('Login Failed', error.message);
+      const message = error?.message ?? 'Unable to login. Please try again.';
+      console.log('[Login] Login failed', { code: error?.code, message });
+      Alert.alert('Login Failed', message);
     } finally {
+      console.log('[Login] Login flow finished');
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    console.log('[Login] Google login submitted');
+    try {
+      setLoading(true);
+      const result = await signInWithGoogle();
+      if (result) {
+        console.log('[Login] Google login successful', { uid: result.user.uid });
+        Alert.alert('Login Successful', 'You have logged in successfully.', [
+          {
+            text: 'Continue',
+            onPress: () => {
+              console.log('[Login] Navigating to dashboard after Google login');
+              router.replace('/(tabs)/home' as any);
+            },
+          },
+        ]);
+      } else {
+        console.log('[Login] Google login did not return a user');
+      }
+    } catch (error: any) {
+      const message = error?.message ?? 'Unable to login with Google. Please try again.';
+      console.log('[Login] Google login failed', { code: error?.code, message });
+      Alert.alert('Login Failed', message);
+    } finally {
+      console.log('[Login] Google login flow finished');
       setLoading(false);
     }
   };
@@ -61,7 +105,8 @@ export default function LoginScreen() {
               variant="outline"
               icon={<GoogleMark />}
               style={styles.googleButton}
-              onPress={signInWithGoogle}
+              onPress={handleGoogleSignIn}
+              disabled={loading}
             />
 
             <View style={styles.dividerRow}>

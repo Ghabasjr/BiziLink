@@ -23,36 +23,84 @@ export default function SignUpScreen() {
   const handleSignup = async () => {
     const normalizedName = fullName.trim();
     const normalizedEmail = email.trim();
+    console.log('[Signup] Email/password signup submitted', { email: normalizedEmail });
 
     if (!normalizedName || !normalizedEmail || !password) {
+      console.log('[Signup] Validation failed: missing required fields');
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
     if (password.length < 6) {
+      console.log('[Signup] Validation failed: password too short');
       Alert.alert('Error', 'Password must be at least 6 characters');
       return;
     }
     if (!acceptedTerms) {
+      console.log('[Signup] Validation failed: terms not accepted');
       Alert.alert('Error', 'Please accept the Terms of Services');
       return;
     }
     try {
       setLoading(true);
+      console.log('[Signup] Creating Firebase user');
       const userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, password);
+      console.log('[Signup] Firebase user created', { uid: userCredential.user.uid });
 
       // Initialize the user profile in Firestore
+      console.log('[Signup] Creating Firestore user profile for UID:', userCredential.user.uid);
       await setDoc(doc(db, 'users', userCredential.user.uid), {
         id: userCredential.user.uid,
         fullName: normalizedName,
         email: normalizedEmail,
-        subscriptionStatus: 'expired',
+        subscriptionStatus: 'active',
         createdAt: new Date().toISOString()
       }, { merge: true });
+      console.log('[Signup] Firestore user profile successfully created with active subscription status');
 
-      router.replace('/businessInfoScreen');
+      Alert.alert('Signup Successful', 'Your account has been created successfully.', [
+        {
+          text: 'Continue',
+          onPress: () => {
+            console.log('[Signup] Navigating to business info screen');
+            router.replace('/businessInfoScreen');
+          },
+        },
+      ]);
     } catch (error: any) {
-      Alert.alert('Signup Failed', error.message);
+      const message = error?.message ?? 'Unable to create your account. Please try again.';
+      console.log('[Signup] Signup failed', { code: error?.code, message });
+      Alert.alert('Signup Failed', message);
     } finally {
+      console.log('[Signup] Signup flow finished');
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    console.log('[Signup] Google signup submitted');
+    try {
+      setLoading(true);
+      const result = await signInWithGoogle();
+      if (result) {
+        console.log('[Signup] Google signup successful', { uid: result.user.uid });
+        Alert.alert('Signup Successful', 'Your account has been created successfully.', [
+          {
+            text: 'Continue',
+            onPress: () => {
+              console.log('[Signup] Navigating to business info screen after Google signup');
+              router.replace('/businessInfoScreen');
+            },
+          },
+        ]);
+      } else {
+        console.log('[Signup] Google signup did not return a user');
+      }
+    } catch (error: any) {
+      const message = error?.message ?? 'Unable to signup with Google. Please try again.';
+      console.log('[Signup] Google signup failed', { code: error?.code, message });
+      Alert.alert('Signup Failed', message);
+    } finally {
+      console.log('[Signup] Google signup flow finished');
       setLoading(false);
     }
   };
@@ -82,7 +130,8 @@ export default function SignUpScreen() {
               variant="outline"
               icon={<GoogleMark />}
               style={styles.googleButton}
-              onPress={signInWithGoogle}
+              onPress={handleGoogleSignIn}
+              disabled={loading}
             />
 
             <View style={styles.dividerRow}>

@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users collection
+    match /users/{userId} {
+      // Anyone can read user profile (needed for public store view at /store/[storeSlug])
+      allow read: if true;
+      // Authenticated users can create or update profile data
+      allow create, update: if request.auth != null;
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Products collection
+    match /products/{productId} {
+      // Anyone can read products for storefront display
+      allow read: if true;
+      // Authenticated users can create, update, and delete products
+      allow create, update, delete: if request.auth != null;
+    }
+
+    // Interests collection (leads/inquiries from store visitors)
+    match /interests/{interestId} {
+      // Anyone can submit an interest inquiry
+      allow create: if true;
+      // Authenticated users can read/manage interests
+      allow read, update, delete: if request.auth != null;
+    }
+  }
+}
+

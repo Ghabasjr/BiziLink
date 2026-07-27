@@ -1,19 +1,19 @@
 import { AppButton } from '@/components/ui/app-button';
 import { AppTextInput } from '@/components/ui/app-text-input';
-import { Image } from 'expo-image';
 import { auth, db } from '@/lib/firebase';
-import { signOut } from 'firebase/auth';
+import { Country, State } from 'country-state-city';
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
+import { signOut } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { useState } from "react";
-import { Country, State } from 'country-state-city';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
     Alert,
     FlatList,
     KeyboardAvoidingView,
     Modal,
     Platform,
-    SafeAreaView,
     ScrollView,
     StatusBar,
     StyleSheet,
@@ -22,7 +22,7 @@ import {
     View
 } from "react-native";
 
-
+const PURPLE = "#7B2FE0";
 
 type DropdownProps = {
     label: string;
@@ -103,13 +103,16 @@ export default function BusinessInfoScreen() {
     };
 
     const handleContinue = async () => {
+        console.log('[BusinessInfo] Submitting business info:', { businessName, whatsapp, country, state });
         if (!businessName || !whatsapp || !country || !state) {
+            console.log('[BusinessInfo] Validation failed: missing required fields');
             Alert.alert("Error", "Please fill in all fields");
             return;
         }
 
         const user = auth.currentUser;
         if (!user) {
+            console.log('[BusinessInfo] User not logged in');
             Alert.alert("Error", "You must be logged in to complete this step");
             return;
         }
@@ -117,6 +120,7 @@ export default function BusinessInfoScreen() {
         try {
             setLoading(true);
             const storeSlug = businessName.toLowerCase().replace(/[^a-z0-9]/g, '') + '-' + Math.floor(Math.random() * 1000);
+            console.log('[BusinessInfo] Saving profile to Firestore for UID:', user.uid, { storeSlug });
 
             await setDoc(doc(db, "users", user.uid), {
                 businessName,
@@ -125,9 +129,11 @@ export default function BusinessInfoScreen() {
                 state,
                 storeSlug
             }, { merge: true });
+            console.log('[BusinessInfo] Successfully saved profile to Firestore');
 
             router.push('/businessRegisterScreen');
         } catch (error: any) {
+            console.error('[BusinessInfo] Error saving business info:', error);
             Alert.alert("Error", error.message);
         } finally {
             setLoading(false);
@@ -135,8 +141,8 @@ export default function BusinessInfoScreen() {
     };
 
     const countryOptions = Country.getAllCountries().map(c => c.name);
-    const stateOptions = countryCode 
-        ? State.getStatesOfCountry(countryCode).map(s => s.name) 
+    const stateOptions = countryCode
+        ? State.getStatesOfCountry(countryCode).map(s => s.name)
         : [];
 
     return (
@@ -153,7 +159,7 @@ export default function BusinessInfoScreen() {
                 >
                     {/* Header */}
                     <View style={styles.header}>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             onPress={async () => {
                                 try {
                                     await signOut(auth);
@@ -161,7 +167,7 @@ export default function BusinessInfoScreen() {
                                 } catch {
                                     router.replace('/' as any);
                                 }
-                            }} 
+                            }}
                             style={{ alignSelf: "flex-start", marginBottom: 20 }}
                         >
                             <Text style={{ fontSize: 18, color: PURPLE }}>← Back</Text>
@@ -202,22 +208,20 @@ export default function BusinessInfoScreen() {
                             disabled={!country}
                         />
                     </View>
-                </ScrollView>
 
-                {/* Footer button */}
-                <View style={styles.footer}>
-                    <AppButton
-                        title={loading ? "Please wait..." : "Continue"}
-                        onPress={handleContinue}
-                        disabled={loading}
-                    />
-                </View>
+                    {/* Continue Button */}
+                    <View style={styles.footer}>
+                        <AppButton
+                            title={loading ? "Please wait..." : "Continue"}
+                            onPress={handleContinue}
+                            disabled={loading}
+                        />
+                    </View>
+                </ScrollView>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }
-
-const PURPLE = "#7B2FE0";
 
 const styles = StyleSheet.create({
     safe: {
@@ -227,102 +231,91 @@ const styles = StyleSheet.create({
     scroll: {
         flexGrow: 1,
         paddingHorizontal: 24,
-        paddingTop: 48,
-        paddingBottom: 16,
+        paddingTop: 40,
+        paddingBottom: 32,
     },
-
-    // Header
     header: {
-        alignItems: "center",
         marginBottom: 32,
     },
     title: {
-        fontSize: 24,
+        fontSize: 28,
         fontWeight: "700",
-        color: "#1A1A2E",
-        marginBottom: 10,
-        letterSpacing: 0.2,
+        color: "#1A1A1A",
+        marginBottom: 8,
     },
     subtitle: {
         fontSize: 14,
-        color: "#9B9BAD",
-        textAlign: "center",
-        lineHeight: 21,
+        color: "#666666",
+        lineHeight: 20,
     },
-
-    // Form
     form: {
-        gap: 14,
+        gap: 16,
+        marginBottom: 32,
     },
-
-    // Dropdown
     dropdown: {
+        height: 52,
+        backgroundColor: "#FFFFFF",
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: "#E5E5EA",
+        paddingHorizontal: 16,
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        backgroundColor: "#EFEFEF",
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        paddingVertical: 18,
     },
     dropdownDisabled: {
-        opacity: 0.5,
+        backgroundColor: "#F2F2F7",
+        borderColor: "#E5E5EA",
     },
     dropdownText: {
         fontSize: 15,
-        color: "#1A1A2E",
-        fontWeight: "400",
+        color: "#1A1A1A",
     },
     dropdownPlaceholder: {
-        color: "#9B9BAD",
+        color: "#C7C7CC",
     },
     chevronImage: {
-        width: 14,
-        height: 14,
-        tintColor: "#555",
+        width: 16,
+        height: 16,
+        tintColor: "#666666",
     },
     chevronDisabled: {
-        tintColor: "#aaa",
-        opacity: 0.5,
+        tintColor: "#C7C7CC",
     },
-
-    // Modal
     modalOverlay: {
         flex: 1,
         backgroundColor: "rgba(0,0,0,0.4)",
         justifyContent: "flex-end",
     },
     modalSheet: {
-        backgroundColor: "#fff",
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        paddingTop: 20,
-        paddingBottom: 36,
-        maxHeight: "60%",
+        backgroundColor: "#FFFFFF",
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        maxHeight: "70%",
+        padding: 24,
     },
     modalTitle: {
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: "600",
-        color: "#1A1A2E",
-        textAlign: "center",
-        marginBottom: 12,
-        paddingHorizontal: 24,
+        color: "#1A1A1A",
+        marginBottom: 16,
     },
     modalItem: {
+        paddingVertical: 14,
+        borderBottomWidth: 1,
+        borderBottomColor: "#F2F2F7",
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        paddingVertical: 14,
-        paddingHorizontal: 24,
-        borderBottomWidth: 1,
-        borderBottomColor: "#F0F0F0",
     },
     modalItemSelected: {
-        backgroundColor: "#F3EAFF",
+        backgroundColor: "#F5F0FF",
+        paddingHorizontal: 12,
+        borderRadius: 8,
     },
     modalItemText: {
         fontSize: 15,
-        color: "#1A1A2E",
+        color: "#1A1A1A",
     },
     modalItemTextSelected: {
         color: PURPLE,
@@ -331,14 +324,10 @@ const styles = StyleSheet.create({
     checkmark: {
         fontSize: 16,
         color: PURPLE,
-        fontWeight: "700",
+        fontWeight: "bold",
     },
-
-    // Footer
     footer: {
-        paddingHorizontal: 24,
-        paddingBottom: Platform.OS === "ios" ? 8 : 58,
-        paddingTop: 12,
-        backgroundColor: "#F5F5FA",
+        marginTop: "auto",
+        marginBottom: 16,
     },
 });

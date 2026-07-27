@@ -8,21 +8,21 @@
     "scheme": "bizilink",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/images/BizlinkLogo.png"
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/images/BizlinkLogo.png",
+        "backgroundImage": "./assets/images/BizlinkLogo.png",
+        "monochromeImage": "./assets/images/BizlinkLogo.png"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.forkhive.bizilink"
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/BizlinkLogo.png"
     },
     "plugins": [
       "expo-router",
