@@ -163,7 +163,7 @@ export default function UnpaidDashboard() {
                 <View style={styles.actionsRow}>
                     <TouchableOpacity
                         style={[styles.actionBtn, !isSubscribed && { opacity: 0.5 }]}
-                        onPress={() => isSubscribed ? router.push('/add-Product/index' as any) : null}
+                        onPress={() => isSubscribed ? router.push('/add-Product' as any) : null}
                         activeOpacity={0.8}
                     >
                         <View style={[styles.actionIcon, { backgroundColor: "#25C16F" }]}>

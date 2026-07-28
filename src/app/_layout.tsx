@@ -123,24 +123,25 @@ export default function RootLayout() {
       }
 
       const hasBusinessName = !!(userData.businessName && userData.businessName.trim());
-      const subStatus = userData.subscriptionStatus || 'active';
+      const subStatus = userData.subscriptionStatus || 'inactive';
 
       if (!hasBusinessName) {
-        // User hasn't completed business info — only redirect if not already on onboarding/public
+        // User hasn't completed business info — redirect to businessInfoScreen
         if (!isBusinessInfoRoute) {
           console.log('[Layout Navigation] Missing businessName. Redirecting to /businessInfoScreen');
           router.replace('/businessInfoScreen' as any);
         }
       } else if (subStatus === 'pending') {
-        // Subscription verification is pending
+        // Subscription verification is pending admin review
         if (!isPendingRoute) {
           console.log('[Layout Navigation] Subscription pending. Redirecting to /pendingScreen');
           router.replace('/pendingScreen' as any);
         }
       } else {
-        // Active / Expired — send to tabs if currently on public or onboarding page
-        if (!isInsideTabs && (isPublicRoute || isOnboardingRoute)) {
-          console.log('[Layout Navigation] Setup complete with status:', subStatus, '. Redirecting to /(tabs)/home');
+        // User has completed business info & is active/inactive/expired:
+        // Send to tabs if currently on a public/login route or index
+        if (isPublicRoute) {
+          console.log('[Layout Navigation] Authenticated user on public route. Redirecting to /(tabs)/home');
           router.replace('/(tabs)/home' as any);
         }
       }

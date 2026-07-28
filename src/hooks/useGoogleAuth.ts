@@ -105,12 +105,12 @@ export function useGoogleAuth() {
       console.log('[GoogleAuth] Checking Firestore user profile for UID:', user.uid);
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       if (!userDoc.exists()) {
-        console.log('[GoogleAuth] Creating new Firestore user profile with active subscription for Google user');
+        console.log('[GoogleAuth] Creating new Firestore user profile with inactive subscription for Google user');
         await setDoc(doc(db, 'users', user.uid), {
           id: user.uid,
           fullName: user.displayName || '',
           email: user.email || '',
-          subscriptionStatus: 'active',
+          subscriptionStatus: 'inactive',
           createdAt: new Date().toISOString(),
         });
         console.log('[GoogleAuth] Created new user profile successfully');

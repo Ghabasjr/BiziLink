@@ -52,10 +52,10 @@ export default function SignUpScreen() {
         id: userCredential.user.uid,
         fullName: normalizedName,
         email: normalizedEmail,
-        subscriptionStatus: 'active',
+        subscriptionStatus: 'inactive',
         createdAt: new Date().toISOString()
       }, { merge: true });
-      console.log('[Signup] Firestore user profile successfully created with active subscription status');
+      console.log('[Signup] Firestore user profile successfully created with inactive subscription status');
 
       Alert.alert('Signup Successful', 'Your account has been created successfully.', [
         {

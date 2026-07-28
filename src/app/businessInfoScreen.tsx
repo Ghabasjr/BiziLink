@@ -7,7 +7,6 @@ import { router } from 'expo-router';
 import { signOut } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { useState } from "react";
-import { SafeAreaView } from 'react-native-safe-area-context';
 import {
     Alert,
     FlatList,
@@ -21,6 +20,7 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const PURPLE = "#7B2FE0";
 

@@ -180,7 +180,7 @@ export default function BusinessRegisteredScreen() {
             {/* Footer buttons */}
             <Animated.View style={[styles.footer, { opacity: btnOpacity }]}>
                 <AppButton title="Proceed to Pay" onPress={() => router.push('/payment')} />
-                <TouchableOpacity style={styles.laterBtn} onPress={() => router.push('/(tabs)/home' as any)} activeOpacity={0.7}>
+                <TouchableOpacity style={styles.laterBtn} onPress={() => router.push('/login' as any)} activeOpacity={0.7}>
                     <Text style={styles.laterText}>May be later</Text>
                 </TouchableOpacity>
             </Animated.View>

@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { auth, db } from './firebase';
+import { PublicStoreView } from './PublicStoreView';
 
 interface UserProfile {
   id: string;
@@ -51,6 +52,32 @@ interface Toast {
 }
 
 export default function App() {
+  // Public Store Route state
+  const [currentStoreSlug, setCurrentStoreSlug] = useState<string | null>(() => {
+    const path = window.location.pathname;
+    if (path.startsWith('/store/')) {
+      const slug = path.replace('/store/', '').split('/')[0];
+      return slug || null;
+    }
+    const params = new URLSearchParams(window.location.search);
+    return params.get('storeSlug') || params.get('store') || null;
+  });
+
+  useEffect(() => {
+    const handleLocationChange = () => {
+      const path = window.location.pathname;
+      if (path.startsWith('/store/')) {
+        const slug = path.replace('/store/', '').split('/')[0];
+        setCurrentStoreSlug(slug || null);
+      } else {
+        const params = new URLSearchParams(window.location.search);
+        setCurrentStoreSlug(params.get('storeSlug') || params.get('store') || null);
+      }
+    };
+    window.addEventListener('popstate', handleLocationChange);
+    return () => window.removeEventListener('popstate', handleLocationChange);
+  }, []);
+
   // Auth state
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
@@ -251,6 +278,19 @@ export default function App() {
       return true;
     });
   }, [users, activeTab, searchQuery]);
+
+  // Render Public Store View if URL contains a store slug
+  if (currentStoreSlug) {
+    return (
+      <PublicStoreView
+        storeSlug={currentStoreSlug}
+        onBackToAdmin={() => {
+          window.history.pushState({}, '', '/');
+          setCurrentStoreSlug(null);
+        }}
+      />
+    );
+  }
 
   // Render Loading Screen
   if (authLoading) {

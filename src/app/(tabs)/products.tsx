@@ -113,7 +113,7 @@ export default function ProductsScreen() {
                 <Text style={styles.headerTitle}>My Products</Text>
                 <TouchableOpacity 
                     style={styles.addBtn}
-                    onPress={() => router.push("/add-Product/index" as any)}
+                    onPress={() => router.push("/add-Product" as any)}
                 >
                     <Text style={styles.addBtnText}>+ Add</Text>
                 </TouchableOpacity>
