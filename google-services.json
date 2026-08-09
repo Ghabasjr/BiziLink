@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "781913153882",
+    "firebase_url": "https://bizilink-a8d60-default-rtdb.firebaseio.com",
+    "project_id": "bizilink-a8d60",
+    "storage_bucket": "bizilink-a8d60.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:781913153882:android:4576e2e3a34f630c31d363",
+        "android_client_info": {
+          "package_name": "com.forkhive.bizilink"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "781913153882-idve7g3jbgn2f77tr8nker1231uhq0fr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCblTUznOGIc6n7obX09Ueo6nkig0Dz8zs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "781913153882-idve7g3jbgn2f77tr8nker1231uhq0fr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

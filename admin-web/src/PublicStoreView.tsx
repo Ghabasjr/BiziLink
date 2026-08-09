@@ -40,6 +40,14 @@ export const PublicStoreView: React.FC<PublicStoreViewProps> = ({ storeSlug, onB
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const brandParam = params.get('brand');
+    if (brandParam) {
+      setSearchQuery(brandParam);
+    }
+  }, []);
+
+  useEffect(() => {
     const fetchStoreData = async () => {
       try {
         setLoading(true);
