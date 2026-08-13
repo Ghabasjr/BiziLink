@@ -4,19 +4,19 @@
     "slug": "bizilink",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/BizlinkLogo.png",
+    "icon": "./assets/images/BizLogo.jpg",
     "scheme": "bizilink",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/images/BizlinkLogo.png",
+      "icon": "./assets/images/BizLogo.jpg",
       "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/BizlinkLogo.png",
-        "backgroundImage": "./assets/images/BizlinkLogo.png",
-        "monochromeImage": "./assets/images/BizlinkLogo.png"
+        "foregroundImage": "./assets/images/BizLogo.jpg",
+        "backgroundImage": "./assets/images/BizLogo.jpg",
+        "monochromeImage": "./assets/images/BizLogo.jpg"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.forkhive.bizilink",
@@ -24,7 +24,7 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/BizlinkLogo.png"
+      "favicon": "./assets/images/BizLogo.jpg"
     },
     "plugins": [
       "expo-router",
@@ -33,10 +33,10 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#933EFF",
-          "image": "./assets/images/BizlinkLogo.png",
+          "image": "./assets/images/BizLogo.jpg",
           "imageWidth": 120,
           "android": {
-            "image": "./assets/images/BizlinkLogo.png",
+            "image": "./assets/images/BizLogo.jpg",
             "imageWidth": 120
           }
         }
