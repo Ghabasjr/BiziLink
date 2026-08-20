@@ -142,7 +142,7 @@ export default function ProfileScreen() {
                         </Text>
                     </View>
                     <Text style={styles.businessNameText}>{userData?.businessName || "Your Store"}</Text>
-                    <Text style={styles.slugText}>bizilink.ng/store/{userData?.storeSlug}</Text>
+                    <Text style={styles.slugText}>bizi-link.vercel.app/store/{userData?.storeSlug}</Text>
 
                     {/* Subscription badge */}
                     <View style={[styles.subBadge, { backgroundColor: statusColor + "20" }]}>
@@ -198,7 +198,7 @@ export default function ProfileScreen() {
                 <View style={styles.card}>
                     <Text style={styles.cardTitle}>Subscription</Text>
                     <InfoRow icon="💳" label="Status" value={statusLabel} valueColor={statusColor} />
-                    <InfoRow icon="💰" label="Plan" value="₦1000 / month" last />
+                    <InfoRow icon="💰" label="Plan" value="₦500 / month" last />
                 </View>
 
                 {/* Actions */}

@@ -1,4 +1,4 @@
-import { auth, db } from "@/lib/firebase";
+import { auth, db, PUBLIC_STORE_BASE_URL } from "@/lib/firebase";
 import { useRouter } from "expo-router";
 import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
@@ -10,6 +10,7 @@ import {
     Platform,
     SafeAreaView,
     ScrollView,
+    Share,
     StatusBar,
     StyleSheet,
     Text,
@@ -35,6 +36,7 @@ const BRANDS: Brand[] = [
 export default function ShareLinkScreen() {
     const router = useRouter();
     const [storeSlug, setStoreSlug] = useState("");
+    const [businessName, setBusinessName] = useState("");
     const [brandProductCounts, setBrandProductCounts] = useState<Record<string, number>>({});
     const [loading, setLoading] = useState(true);
 
@@ -46,10 +48,12 @@ export default function ShareLinkScreen() {
                 return;
             }
             try {
-                // Get store slug
+                // Get store slug & business name
                 const userDoc = await getDoc(doc(db, "users", user.uid));
                 if (userDoc.exists()) {
-                    setStoreSlug(userDoc.data()?.storeSlug || "");
+                    const data = userDoc.data();
+                    setStoreSlug(data?.storeSlug || "");
+                    setBusinessName(data?.businessName || "");
                 }
 
                 // Get product counts per brand
@@ -74,13 +78,41 @@ export default function ShareLinkScreen() {
         fetchData();
     }, []);
 
+    const mainStoreUrl = storeSlug ? `${PUBLIC_STORE_BASE_URL}/store/${storeSlug}` : "";
+
+    const handleCopyMainLink = () => {
+        if (!storeSlug) {
+            Alert.alert("Error", "We could not fetch your store slug. Please set up your business profile first.");
+            return;
+        }
+
+        Clipboard.setString(mainStoreUrl);
+        Alert.alert("Store Link Copied", "Your main store link has been copied to your clipboard.");
+    };
+
+    const handleShareMainLink = async () => {
+        if (!storeSlug) {
+            Alert.alert("Error", "We could not fetch your store slug. Please set up your business profile first.");
+            return;
+        }
+
+        try {
+            await Share.share({
+                message: `Check out ${businessName || 'my'} store on BiziLink! ${mainStoreUrl}`,
+                url: mainStoreUrl,
+            });
+        } catch (error) {
+            console.error("Failed to share store", error);
+        }
+    };
+
     const handleCopyLink = (brand: Brand) => {
         if (!storeSlug) {
             Alert.alert("Error", "We could not fetch your store slug. Please set up your business profile first.");
             return;
         }
 
-        const link = `https://bizilink.ng/store/${storeSlug}?brand=${encodeURIComponent(brand.name)}`;
+        const link = `${PUBLIC_STORE_BASE_URL}/store/${storeSlug}?brand=${encodeURIComponent(brand.name)}`;
         Clipboard.setString(link);
 
         Alert.alert("Link Copied", `Successfully copied the link for "${brand.name}" to clipboard.`);
@@ -93,7 +125,7 @@ export default function ShareLinkScreen() {
         }
 
         const allLinks = BRANDS.map(
-            (brand) => `${brand.name}: https://bizilink.ng/store/${storeSlug}?brand=${encodeURIComponent(brand.name)}`
+            (brand) => `${brand.name}: ${PUBLIC_STORE_BASE_URL}/store/${storeSlug}?brand=${encodeURIComponent(brand.name)}`
         ).join("\n");
         Clipboard.setString(allLinks);
 
@@ -119,7 +151,6 @@ export default function ShareLinkScreen() {
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Share Link</Text>
                 <TouchableOpacity style={styles.searchBtn} activeOpacity={0.7}>
-                    {/* Search icon (Unicode representation of magnifying glass) */}
                     <Text style={styles.searchIcon}></Text>
                     <View>
                         <Image
@@ -141,6 +172,22 @@ export default function ShareLinkScreen() {
 
             {/* Content */}
             <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                {/* Main Store Link Card */}
+                <View style={styles.mainLinkCard}>
+                    <Text style={styles.mainLinkTitle}>Your Public Store Link</Text>
+                    <Text style={styles.mainLinkUrl} numberOfLines={1}>
+                        {mainStoreUrl || "https://bizi-link.vercel.app/store/..."}
+                    </Text>
+                    <View style={styles.mainLinkBtnRow}>
+                        <TouchableOpacity style={styles.mainLinkBtnSecondary} onPress={handleCopyMainLink} activeOpacity={0.8}>
+                            <Text style={styles.mainLinkBtnSecondaryText}>Copy Store Link</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.mainLinkBtnPrimary} onPress={handleShareMainLink} activeOpacity={0.8}>
+                            <Text style={styles.mainLinkBtnPrimaryText}>Share Link</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+
                 <Text style={styles.sectionLabel}>Please Copy link and send to customer</Text>
 
                 <View style={styles.brandList}>
@@ -262,6 +309,61 @@ const styles = StyleSheet.create({
         paddingTop: 8,
         paddingBottom: 24,
         gap: 14,
+    },
+    mainLinkCard: {
+        backgroundColor: "#FFFFFF",
+        borderRadius: 16,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: "#EAEAEA",
+        shadowColor: "#000",
+        shadowOpacity: 0.04,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 2 },
+        elevation: 2,
+        marginBottom: 8,
+    },
+    mainLinkTitle: {
+        fontSize: 13,
+        fontWeight: "600",
+        color: "#666666",
+        marginBottom: 4,
+    },
+    mainLinkUrl: {
+        fontSize: 15,
+        fontWeight: "700",
+        color: PURPLE,
+        marginBottom: 14,
+    },
+    mainLinkBtnRow: {
+        flexDirection: "row",
+        gap: 10,
+    },
+    mainLinkBtnSecondary: {
+        flex: 1,
+        backgroundColor: "#F0EBFE",
+        borderRadius: 12,
+        paddingVertical: 10,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    mainLinkBtnSecondaryText: {
+        fontSize: 13,
+        fontWeight: "700",
+        color: PURPLE,
+    },
+    mainLinkBtnPrimary: {
+        flex: 1,
+        backgroundColor: PURPLE,
+        borderRadius: 12,
+        paddingVertical: 10,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    mainLinkBtnPrimaryText: {
+        fontSize: 13,
+        fontWeight: "700",
+        color: "#FFFFFF",
     },
     sectionLabel: {
         fontSize: 20,

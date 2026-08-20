@@ -143,34 +143,16 @@ export default function AddProductScreen({
                     <Text style={styles.inputText}>{categoryName}</Text>
                 </View>
 
-                {/* ── Brand Name dropdown ── */}
-                <TouchableOpacity
-                    style={styles.inputBox}
-                    onPress={() => setBrandDropOpen((v) => !v)}
-                    activeOpacity={0.8}
-                >
-                    <Text style={[styles.inputText, !brandName && styles.placeholder]}>
-                        {brandName || "Brand Name"}
-                    </Text>
-                    <Text style={[styles.dropArrow, brandDropOpen && styles.dropArrowUp]}>∨</Text>
-                </TouchableOpacity>
-
-                {brandDropOpen && (
-                    <View style={styles.dropdown}>
-                        {BRAND_OPTIONS.map((opt) => (
-                            <TouchableOpacity
-                                key={opt}
-                                style={styles.dropOption}
-                                onPress={() => { setBrandName(opt); setBrandDropOpen(false); }}
-                                activeOpacity={0.7}
-                            >
-                                <Text style={[styles.dropOptionText, brandName === opt && styles.dropOptionActive]}>
-                                    {opt}
-                                </Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-                )}
+                {/* ── Brand / Yard Name input ── */}
+                <View style={styles.inputBox}>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Enter Yard Name/Brand"
+                        placeholderTextColor="#AAAAAA"
+                        value={brandName}
+                        onChangeText={setBrandName}
+                    />
+                </View>
 
                 {/* ── Product Price ── */}
                 <View style={styles.inputBox}>

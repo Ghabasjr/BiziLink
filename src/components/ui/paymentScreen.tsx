@@ -24,10 +24,10 @@ interface Props {
 }
 
 export default function PaymentScreen({
-    amount = "₦1000",
-    accountName = "Bizilink Tech Ng",
-    bankName = "Access Bank, Plc",
-    accountNo = "1221244910",
+    amount = "₦500",
+    accountName = "SHUAIBU ALIYU",
+    bankName = "OPay",
+    accountNo = "6450393378",
     onSubmit,
     onBackToHome,
     isSubmitting = false,

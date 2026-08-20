@@ -51,8 +51,8 @@ export default function UnpaidDashboard() {
         if (!userData?.storeSlug) return;
         try {
             await Share.share({
-                message: `Check out ${userData.businessName || 'my'} store on BiziLink! https://bizilink.ng/store/${userData.storeSlug}`,
-                url: `https://bizilink.ng/store/${userData.storeSlug}`,
+                message: `Check out ${userData.businessName || 'my'} store on BiziLink! https://bizi-link.vercel.app/store/${userData.storeSlug}`,
+                url: `https://bizi-link.vercel.app/store/${userData.storeSlug}`,
             });
         } catch (error) {
             console.error("Failed to share store", error);
@@ -111,10 +111,6 @@ export default function UnpaidDashboard() {
             >
                 {/* ── Header ── */}
                 <View style={styles.header}>
-                    <TouchableOpacity style={styles.menuBtn}>
-                        <Text style={styles.menuIcon}>☰</Text>
-                    </TouchableOpacity>
-
                     <View style={styles.headerText}>
                         <Text style={styles.greeting}>Good Morning, {userData?.fullName?.split(' ')[0] || 'User'}</Text>
                         <Text style={styles.subGreeting}>Let get your store live and start selling</Text>
@@ -153,7 +149,7 @@ export default function UnpaidDashboard() {
                                 <TouchableOpacity style={styles.activateBtn} onPress={() => router.push('/payment')}>
                                     <Text style={styles.activateBtnText}>Activate</Text>
                                 </TouchableOpacity>
-                                <Text style={styles.price}>₦1000 / month</Text>
+                                <Text style={styles.price}>₦500 / month</Text>
                             </View>
                         </View>
                     )}
@@ -176,7 +172,7 @@ export default function UnpaidDashboard() {
 
                     <TouchableOpacity
                         style={styles.actionBtn}
-                        onPress={handleShareStore}
+                        onPress={() => router.push('/share-link' as any)}
                         activeOpacity={0.8}
                     >
                         <View style={[styles.actionIcon, { backgroundColor: "#FEF0DC" }]}>

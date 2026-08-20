@@ -39,6 +39,7 @@ interface Product {
     isOutOfStock: boolean;
     brandName?: string;
     description?: string;
+    color?: string;
 }
 
 interface StoreBrand {
@@ -56,6 +57,25 @@ const STORE_BRANDS: StoreBrand[] = [
     { name: "Dan Abba", image: "https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?q=80&w=300&auto=format&fit=crop", colors: "8 Colors" },
 ];
 
+const STORE_COLORS = [
+    "All Colors",
+    "Red",
+    "Blue",
+    "Green",
+    "Gold",
+    "White",
+    "Black",
+    "Yellow",
+    "Purple",
+    "Navy Blue",
+    "Brown",
+    "Pink",
+    "Silver",
+    "Orange",
+    "Teal",
+    "Maroon",
+];
+
 export default function StorefrontPage() {
     const { storeSlug, brand } = useLocalSearchParams<{ storeSlug: string; brand?: string }>();
     const initialBrand = Array.isArray(brand) ? brand[0] : brand;
@@ -67,6 +87,10 @@ export default function StorefrontPage() {
     const [selectedBrand, setSelectedBrand] = useState(initialBrand || "Men Lace");
     const [tempSelectedBrand, setTempSelectedBrand] = useState(initialBrand || "Men Lace");
     const [brandModalOpen, setBrandModalOpen] = useState(false);
+
+    // Color Selection & Filter State
+    const [selectedColor, setSelectedColor] = useState<string | null>(null);
+    const [colorModalOpen, setColorModalOpen] = useState(false);
 
     // Likes tracking
     const [likedProducts, setLikedProducts] = useState<Record<string, boolean>>({});
@@ -259,13 +283,25 @@ export default function StorefrontPage() {
                         <Text style={styles.dropdownArrow}>▼</Text>
                     </TouchableOpacity>
 
+                    {/* Color Dropdown Trigger */}
+                    <TouchableOpacity
+                        style={styles.dropdownTrigger}
+                        onPress={() => setColorModalOpen(true)}
+                        activeOpacity={0.7}
+                    >
+                        <Text style={styles.dropdownTriggerText}>
+                            {selectedColor && selectedColor !== "All Colors" ? selectedColor : "Select Color"}
+                        </Text>
+                        <Text style={styles.dropdownArrow}>▼</Text>
+                    </TouchableOpacity>
+
                     {/* Product Cards Filtered by Brand */}
                     {filteredProducts.length === 0 ? (
                         <View style={styles.emptyState}>
                             <Text style={styles.emptyIcon}>📦</Text>
                             <Text style={styles.emptyTitle}>No products found</Text>
                             <Text style={styles.emptySub}>
-                                There are no products currently available under &quot;{selectedBrand}&quot;.
+                                There are no products currently available under &quot;{selectedBrand}&quot;{selectedColor ? ` in ${selectedColor}` : ""}.
                             </Text>
                         </View>
                     ) : (
@@ -378,6 +414,45 @@ export default function StorefrontPage() {
                                 <Text style={styles.modalContinueText}>Continue</Text>
                             </TouchableOpacity>
                         </View>
+                    </View>
+                </TouchableOpacity>
+            </Modal>
+
+            {/* Select Color Dropdown Modal (Closes immediately upon selection) */}
+            <Modal visible={colorModalOpen} transparent animationType="slide">
+                <TouchableOpacity
+                    style={styles.modalOverlay}
+                    activeOpacity={1}
+                    onPress={() => setColorModalOpen(false)}
+                >
+                    <View style={styles.modalSheet} onStartShouldSetResponder={() => true}>
+                        <Text style={styles.modalTitle}>Select Color</Text>
+
+                        <ScrollView showsVerticalScrollIndicator={false} style={styles.modalScroll}>
+                            <View style={styles.modalList}>
+                                {STORE_COLORS.map((colorOpt) => {
+                                    const isSelected =
+                                        (selectedColor?.toLowerCase() === colorOpt.toLowerCase()) ||
+                                        (!selectedColor && colorOpt === "All Colors");
+                                    return (
+                                        <TouchableOpacity
+                                            key={colorOpt}
+                                            style={[styles.colorOptionCard, isSelected && styles.colorOptionCardSelected]}
+                                            onPress={() => {
+                                                setSelectedColor(colorOpt === "All Colors" ? null : colorOpt);
+                                                setColorModalOpen(false);
+                                            }}
+                                            activeOpacity={0.7}
+                                        >
+                                            <Text style={styles.colorOptName}>{colorOpt}</Text>
+                                            <View style={[styles.radio, isSelected && styles.radioSelected]}>
+                                                {isSelected && <View style={styles.radioDot} />}
+                                            </View>
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </View>
+                        </ScrollView>
                     </View>
                 </TouchableOpacity>
             </Modal>
@@ -725,6 +800,27 @@ const styles = StyleSheet.create({
         height: 10,
         borderRadius: 5,
         backgroundColor: PURPLE,
+    },
+
+    // Color Option Card
+    colorOptionCard: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        backgroundColor: "#FFFFFF",
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: "#EFEFEF",
+    },
+    colorOptionCardSelected: {
+        borderColor: PURPLE,
+    },
+    colorOptName: {
+        fontSize: 15,
+        fontWeight: "600",
+        color: "#1A1A1A",
     },
 
     // Modal Footer

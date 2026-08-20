@@ -16,7 +16,7 @@ export default function SubscriptionLock({ tabName }: SubscriptionLockProps) {
         </View>
         <Text style={styles.title}>Unlock {tabName}</Text>
         <Text style={styles.description}>
-          Activate your storefront subscription for just ₦1000/month to unlock {tabName.toLowerCase()} and access premium seller tools.
+          Activate your storefront subscription for just ₦500/month to unlock {tabName.toLowerCase()} and access premium seller tools.
         </Text>
         <TouchableOpacity
           style={styles.btn}

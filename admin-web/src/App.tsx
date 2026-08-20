@@ -187,12 +187,20 @@ export default function App() {
       setLoginSubmitting(true);
       await signInWithEmailAndPassword(auth, email, password);
     } catch (err: any) {
-      console.error(err);
+      console.error("Admin login error:", err);
       let msg = 'Failed to log in. Please check your credentials.';
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-        msg = 'Invalid email or password.';
+      if (
+        err.code === 'auth/invalid-credential' ||
+        err.code === 'auth/user-not-found' ||
+        err.code === 'auth/wrong-password'
+      ) {
+        msg = 'Invalid email or password. Please verify your credentials in Firebase Auth.';
       } else if (err.code === 'auth/invalid-email') {
         msg = 'Invalid email address format.';
+      } else if (err.code === 'auth/unauthorized-domain') {
+        msg = 'Domain not authorized. Please add this domain to Authorized Domains in Firebase Console → Authentication → Settings.';
+      } else if (err.message) {
+        msg = `Login error (${err.code || 'unknown'}): ${err.message}`;
       }
       setLoginError(msg);
       setLoginSubmitting(false);

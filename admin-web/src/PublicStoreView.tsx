@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
-import { ShoppingBag, MapPin, Share2, Search, CheckCircle, AlertCircle, ArrowLeft, MessageSquare } from 'lucide-react';
+import { Share2, AlertCircle, ArrowLeft, ChevronDown, Heart, MessageCircle, X } from 'lucide-react';
 
 interface BusinessUser {
   id: string;
@@ -12,6 +12,7 @@ interface BusinessUser {
   storeSlug: string;
   subscriptionStatus: string;
   email?: string;
+  logoUrl?: string;
 }
 
 interface Product {
@@ -22,8 +23,46 @@ interface Product {
   description?: string;
   image?: string;
   imageUrl?: string;
+  images?: string[];
   category?: string;
+  brandName?: string;
+  color?: string;
+  isOutOfStock?: boolean;
 }
+
+interface StoreBrand {
+  name: string;
+  image: string;
+  colors: string;
+}
+
+const STORE_BRANDS: StoreBrand[] = [
+  { name: "Gedzner", image: "https://images.unsplash.com/photo-1618220179428-22790b461013?q=80&w=300&auto=format&fit=crop", colors: "20 colors" },
+  { name: "Wagambari", image: "https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=300&auto=format&fit=crop", colors: "13 Colors" },
+  { name: "Bazin", image: "https://images.unsplash.com/photo-1584184924103-e310d9dc82fc?q=80&w=300&auto=format&fit=crop", colors: "99 Colors" },
+  { name: "Senator", image: "https://images.unsplash.com/photo-1603048588665-791ca8aea617?q=80&w=300&auto=format&fit=crop", colors: "99 Colors" },
+  { name: "Men Lace", image: "https://images.unsplash.com/photo-1597484662317-c87bdb34eed9?q=80&w=300&auto=format&fit=crop", colors: "10 Colors" },
+  { name: "Dan Abba", image: "https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?q=80&w=300&auto=format&fit=crop", colors: "8 Colors" },
+];
+
+const STORE_COLORS = [
+  "All Colors",
+  "Red",
+  "Blue",
+  "Green",
+  "Gold",
+  "White",
+  "Black",
+  "Yellow",
+  "Purple",
+  "Navy Blue",
+  "Brown",
+  "Pink",
+  "Silver",
+  "Orange",
+  "Teal",
+  "Maroon",
+];
 
 interface PublicStoreViewProps {
   storeSlug: string;
@@ -35,15 +74,26 @@ export const PublicStoreView: React.FC<PublicStoreViewProps> = ({ storeSlug, onB
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  // Brand selection & Modal State
+  const [selectedBrand, setSelectedBrand] = useState<string>("Men Lace");
+  const [tempSelectedBrand, setTempSelectedBrand] = useState<string>("Men Lace");
+  const [brandModalOpen, setBrandModalOpen] = useState(false);
+
+  // Color selection & Modal State
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [colorModalOpen, setColorModalOpen] = useState(false);
+
+  // Likes tracking
+  const [likedProducts, setLikedProducts] = useState<Record<string, boolean>>({});
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const brandParam = params.get('brand');
     if (brandParam) {
-      setSearchQuery(brandParam);
+      setSelectedBrand(brandParam);
+      setTempSelectedBrand(brandParam);
     }
   }, []);
 
@@ -53,7 +103,7 @@ export const PublicStoreView: React.FC<PublicStoreViewProps> = ({ storeSlug, onB
         setLoading(true);
         setError(null);
 
-        // 1. Fetch User / Business by storeSlug
+        // 1. Fetch Business by storeSlug
         const usersRef = collection(db, 'users');
         const qUser = query(usersRef, where('storeSlug', '==', storeSlug));
         const userSnap = await getDocs(qUser);
@@ -92,22 +142,17 @@ export const PublicStoreView: React.FC<PublicStoreViewProps> = ({ storeSlug, onB
     }
   }, [storeSlug]);
 
-  const categories = React.useMemo(() => {
-    const set = new Set<string>();
-    products.forEach((p) => {
-      if (p.category) set.add(p.category);
-    });
-    return Array.from(set);
-  }, [products]);
-
   const filteredProducts = React.useMemo(() => {
     return products.filter((p) => {
-      const name = (p.title || p.name || '').toLowerCase();
-      const matchesSearch = name.includes(searchQuery.toLowerCase());
-      const matchesCat = selectedCategory === 'all' || p.category === selectedCategory;
-      return matchesSearch && matchesCat;
+      const bName = (p.brandName || p.name || p.title || '').toLowerCase();
+      const matchesBrand = !selectedBrand || selectedBrand === 'All Brands' || bName.includes(selectedBrand.toLowerCase());
+
+      const colorVal = (p.color || '').toLowerCase();
+      const matchesColor = !selectedColor || selectedColor === 'All Colors' || colorVal.includes(selectedColor.toLowerCase());
+
+      return matchesBrand && matchesColor;
     });
-  }, [products, searchQuery, selectedCategory]);
+  }, [products, selectedBrand, selectedColor]);
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -115,17 +160,27 @@ export const PublicStoreView: React.FC<PublicStoreViewProps> = ({ storeSlug, onB
     setTimeout(() => setCopied(false), 3000);
   };
 
+  const toggleLike = (productId: string) => {
+    setLikedProducts((prev) => ({ ...prev, [productId]: !prev[productId] }));
+  };
+
   const handleWhatsAppOrder = (product: Product) => {
     if (!business?.whatsappNumber) {
       alert('Store owner has not provided a WhatsApp contact number.');
       return;
     }
-    const cleanPhone = business.whatsappNumber.replace(/[^0-9]/g, '');
+    let cleanPhone = business.whatsappNumber.replace(/[^0-9]/g, '');
+    if (cleanPhone.startsWith("0")) {
+      cleanPhone = "234" + cleanPhone.substring(1);
+    } else if (!cleanPhone.startsWith("234") && cleanPhone.length === 10) {
+      cleanPhone = "234" + cleanPhone;
+    }
+
     const productName = product.title || product.name || 'Product';
     const priceStr = typeof product.price === 'number' ? `₦${product.price.toLocaleString()}` : `₦${product.price}`;
     
     const message = encodeURIComponent(
-      `Hello ${business.businessName}, I am interested in purchasing "${productName}" (${priceStr}) from your BiziLink store.`
+      `Hello, I'm interested in the *${productName}* for ${priceStr}/Yard. Is it available?`
     );
     window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank');
   };
@@ -160,141 +215,238 @@ export const PublicStoreView: React.FC<PublicStoreViewProps> = ({ storeSlug, onB
 
   return (
     <div style={styles.pageWrap}>
-      {/* Top Banner */}
-      <header style={styles.header}>
-        <div style={styles.headerInner}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={styles.avatar}>
-              {business.businessName.substring(0, 2).toUpperCase()}
-            </div>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <h1 style={styles.businessTitle}>{business.businessName}</h1>
-                <CheckCircle size={18} color="#10B981" />
-              </div>
-              <p style={styles.businessSubtitle}>
-                <MapPin size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
-                {business.state ? `${business.state}, ${business.country || 'Nigeria'}` : 'Online Store'}
-              </p>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button onClick={handleShare} style={styles.shareBtn}>
-              <Share2 size={16} />
-              <span>{copied ? 'Link Copied!' : 'Share Store'}</span>
-            </button>
-            {onBackToAdmin && (
-              <button onClick={onBackToAdmin} style={styles.adminNavBtn}>
-                Admin View
-              </button>
+      <div style={styles.appContainer}>
+        
+        {/* Top Header */}
+        <header style={styles.storeHeader}>
+          <div style={styles.avatarCircle}>
+            {business.logoUrl ? (
+              <img src={business.logoUrl} alt={business.businessName} style={styles.avatarImg} />
+            ) : (
+              <span style={styles.avatarLetter}>{business.businessName.charAt(0).toUpperCase()}</span>
             )}
           </div>
-        </div>
-      </header>
+          <div style={styles.storeHeaderText}>
+            <h1 style={styles.storeTitle}>{business.businessName}</h1>
+            <p style={styles.storeSubtitle}>Trusted Store</p>
+          </div>
+          <button onClick={handleShare} style={styles.shareBtn} title={copied ? "Link Copied!" : "Share Link"}>
+            <Share2 size={18} color="#6B3FE7" />
+            {copied && <span style={{ fontSize: '11px', color: '#6B3FE7', fontWeight: 600, marginLeft: '4px' }}>Copied!</span>}
+          </button>
+        </header>
 
-      {/* Main Content */}
-      <main style={styles.main}>
         {!isStoreActive ? (
           <div style={styles.inactiveNotice}>
             <AlertCircle size={24} color="#F59E0B" />
             <div>
-              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: '#92400E' }}>Catalog Temporarily Unavailable</h3>
+              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: '#92400E' }}>Store Unavailable</h3>
               <p style={{ margin: '4px 0 0', fontSize: '14px', color: '#B45309' }}>
-                This store is currently undergoing routine maintenance or subscription renewal. Please check back soon!
+                This store's subscription is currently inactive.
               </p>
             </div>
           </div>
         ) : (
-          <>
-            {/* Search & Categories Bar */}
-            <div style={styles.filterBar}>
-              <div style={styles.searchBox}>
-                <Search size={18} color="#9CA3AF" style={styles.searchIcon} />
-                <input
-                  type="text"
-                  placeholder="Search products in this store..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  style={styles.searchInput}
-                />
-              </div>
+          <div style={styles.storeContent}>
+            
+            {/* Dropdown 1: Brand Trigger */}
+            <button
+              onClick={() => {
+                setTempSelectedBrand(selectedBrand);
+                setBrandModalOpen(true);
+              }}
+              style={styles.dropdownTrigger}
+            >
+              <span style={styles.dropdownTriggerText}>{selectedBrand} - Select Brands</span>
+              <ChevronDown size={18} color="#888888" />
+            </button>
 
-              {categories.length > 0 && (
-                <div style={styles.categoryPills}>
-                  <button
-                    onClick={() => setSelectedCategory('all')}
-                    style={selectedCategory === 'all' ? styles.activePill : styles.pill}
-                  >
-                    All Products ({products.length})
-                  </button>
-                  {categories.map((cat) => (
-                    <button
-                      key={cat}
-                      onClick={() => setSelectedCategory(cat)}
-                      style={selectedCategory === cat ? styles.activePill : styles.pill}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            {/* Dropdown 2: Color Trigger */}
+            <button
+              onClick={() => setColorModalOpen(true)}
+              style={styles.dropdownTrigger}
+            >
+              <span style={styles.dropdownTriggerText}>
+                {selectedColor && selectedColor !== "All Colors" ? selectedColor : "Select Color"}
+              </span>
+              <ChevronDown size={18} color="#888888" />
+            </button>
 
-            {/* Product Grid */}
+            {/* Product Cards List */}
             {filteredProducts.length === 0 ? (
               <div style={styles.emptyState}>
-                <ShoppingBag size={48} color="#9CA3AF" />
-                <h3 style={{ marginTop: '16px', color: '#374151', fontSize: '18px' }}>No products found</h3>
-                <p style={{ color: '#6B7280', fontSize: '14px' }}>Try adjusting your search filter or check back later.</p>
+                <span style={{ fontSize: '48px', display: 'block', marginBottom: '12px' }}>📦</span>
+                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1A1A1A', margin: '0 0 6px' }}>No products found</h3>
+                <p style={{ fontSize: '13px', color: '#888888', margin: 0 }}>
+                  There are no products currently available under "{selectedBrand}"{selectedColor ? ` in ${selectedColor}` : ''}.
+                </p>
               </div>
             ) : (
-              <div style={styles.productGrid}>
+              <div style={styles.productsContainer}>
                 {filteredProducts.map((p) => {
-                  const img = p.image || p.imageUrl || 'https://via.placeholder.com/400x300?text=No+Image';
-                  const title = p.title || p.name || 'Untitled Product';
-                  const priceFormatted = typeof p.price === 'number' ? `₦${p.price.toLocaleString()}` : `₦${p.price}`;
+                  const isLiked = !!likedProducts[p.id];
+                  const img = (p.images && p.images[0]) || p.image || p.imageUrl || 'https://images.unsplash.com/photo-1597484662317-c87bdb34eed9?q=80&w=600&auto=format&fit=crop';
+                  const title = p.title || p.name || 'Product';
+                  const priceVal = typeof p.price === 'number' ? p.price.toLocaleString() : p.price;
 
                   return (
                     <div key={p.id} style={styles.productCard}>
-                      <div style={styles.imageWrap}>
+                      
+                      {/* Image Wrapper */}
+                      <div style={styles.imageWrapper}>
                         <img src={img} alt={title} style={styles.productImg} />
-                      </div>
-                      <div style={styles.cardBody}>
-                        <span style={styles.priceBadge}>{priceFormatted}</span>
-                        <h3 style={styles.productTitle}>{title}</h3>
-                        {p.description && (
-                          <p style={styles.productDesc}>
-                            {p.description.length > 90 ? `${p.description.substring(0, 90)}...` : p.description}
-                          </p>
-                        )}
-                        <button onClick={() => handleWhatsAppOrder(p)} style={styles.orderBtn}>
-                          <MessageSquare size={16} /> Order via WhatsApp
+                        
+                        {/* Heart Button Overlay (top right) */}
+                        <button
+                          onClick={() => toggleLike(p.id)}
+                          style={styles.heartBtn}
+                        >
+                          <Heart size={20} fill={isLiked ? "#E85252" : "#22C55E"} color={isLiked ? "#E85252" : "#22C55E"} />
                         </button>
+
+                        {/* Floating Info Overlay (bottom) */}
+                        <div style={styles.floatingInfoBox}>
+                          <div style={styles.infoCol}>
+                            <span style={styles.infoLabel}>Price</span>
+                            <span style={styles.infoValue}>₦{priceVal}/Yard</span>
+                          </div>
+                          <div style={styles.infoDivider} />
+                          <div style={styles.infoCol}>
+                            <span style={styles.infoLabel}>Availability</span>
+                            <span style={styles.infoValue}>{p.isOutOfStock ? 'Out of Stock' : 'In stock'}</span>
+                          </div>
+                        </div>
                       </div>
+
+                      {/* WhatsApp Button */}
+                      <button
+                        onClick={() => handleWhatsAppOrder(p)}
+                        style={{
+                          ...styles.whatsappBtn,
+                          ...(p.isOutOfStock ? styles.whatsappBtnDisabled : {})
+                        }}
+                        disabled={p.isOutOfStock}
+                      >
+                        <MessageCircle size={20} color="#FFFFFF" />
+                        <span>I Like This</span>
+                      </button>
+
                     </div>
                   );
                 })}
               </div>
             )}
-          </>
-        )}
-      </main>
 
-      {/* Footer */}
-      <footer style={styles.footer}>
-        <p style={{ margin: 0, color: '#6B7280', fontSize: '14px' }}>
-          Powered by <strong>BiziLink</strong> — Grow your business with ease.
-        </p>
-      </footer>
+          </div>
+        )}
+
+      </div>
+
+      {/* Brand Selection Modal (Has Continue Button) */}
+      {brandModalOpen && (
+        <div style={styles.modalOverlay} onClick={() => setBrandModalOpen(false)}>
+          <div style={styles.modalSheet} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.modalHeader}>
+              <h2 style={styles.modalTitle}>Select Brand</h2>
+              <button onClick={() => setBrandModalOpen(false)} style={styles.closeBtn}>
+                <X size={20} color="#666666" />
+              </button>
+            </div>
+
+            <div style={styles.modalScroll}>
+              <div style={styles.modalList}>
+                {STORE_BRANDS.map((b) => {
+                  const isSelected = tempSelectedBrand.toLowerCase() === b.name.toLowerCase();
+                  return (
+                    <div
+                      key={b.name}
+                      onClick={() => setTempSelectedBrand(b.name)}
+                      style={{
+                        ...styles.brandOptionCard,
+                        ...(isSelected ? styles.brandOptionCardSelected : {})
+                      }}
+                    >
+                      <img src={b.image} alt={b.name} style={styles.brandOptThumb} />
+                      <div style={{ flex: 1 }}>
+                        <div style={styles.brandOptName}>{b.name}</div>
+                        <div style={styles.brandOptColors}>{b.colors}</div>
+                      </div>
+                      <div style={{ ...styles.radio, ...(isSelected ? styles.radioSelected : {}) }}>
+                        {isSelected && <div style={styles.radioDot} />}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div style={styles.modalFooter}>
+              <button
+                onClick={() => {
+                  setSelectedBrand(tempSelectedBrand);
+                  setBrandModalOpen(false);
+                }}
+                style={styles.modalContinueBtn}
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Color Selection Modal (Closed IMMEDIATELY upon selection) */}
+      {colorModalOpen && (
+        <div style={styles.modalOverlay} onClick={() => setColorModalOpen(false)}>
+          <div style={styles.modalSheet} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.modalHeader}>
+              <h2 style={styles.modalTitle}>Select Color</h2>
+              <button onClick={() => setColorModalOpen(false)} style={styles.closeBtn}>
+                <X size={20} color="#666666" />
+              </button>
+            </div>
+
+            <div style={styles.modalScroll}>
+              <div style={styles.modalList}>
+                {STORE_COLORS.map((c) => {
+                  const isSelected = (selectedColor?.toLowerCase() === c.toLowerCase()) || (!selectedColor && c === "All Colors");
+                  return (
+                    <div
+                      key={c}
+                      onClick={() => {
+                        setSelectedColor(c === "All Colors" ? null : c);
+                        setColorModalOpen(false);
+                      }}
+                      style={{
+                        ...styles.colorOptionCard,
+                        ...(isSelected ? styles.colorOptionCardSelected : {})
+                      }}
+                    >
+                      <span style={styles.colorOptName}>{c}</span>
+                      <div style={{ ...styles.radio, ...(isSelected ? styles.radioSelected : {}) }}>
+                        {isSelected && <div style={styles.radioDot} />}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
 
+const PURPLE = "#6B3FE7";
+
 const styles: { [key: string]: React.CSSProperties } = {
   pageWrap: {
     minHeight: '100vh',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F7F7F9',
+    display: 'flex',
+    justifyContent: 'center',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
   },
   loadingContainer: {
@@ -309,7 +461,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     width: '40px',
     height: '40px',
     border: '4px solid #E5E7EB',
-    borderTop: '4px solid #7B2FE0',
+    borderTop: '4px solid #6B3FE7',
     borderRadius: '50%',
     animation: 'spin 1s linear infinite',
   },
@@ -329,69 +481,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     maxWidth: '420px',
     boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05)',
   },
-  header: {
-    backgroundColor: '#FFFFFF',
-    borderBottom: '1px solid #E5E7EB',
-    position: 'sticky',
-    top: 0,
-    zIndex: 100,
-  },
-  headerInner: {
-    maxWidth: '1100px',
-    margin: '0 auto',
-    padding: '16px 20px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    flexWrap: 'wrap',
-    gap: '16px',
-  },
-  avatar: {
-    width: '48px',
-    height: '48px',
-    borderRadius: '12px',
-    backgroundColor: '#7B2FE0',
-    color: '#FFFFFF',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontWeight: 700,
-    fontSize: '18px',
-  },
-  businessTitle: {
-    margin: 0,
-    fontSize: '20px',
-    fontWeight: 700,
-    color: '#111827',
-  },
-  businessSubtitle: {
-    margin: '2px 0 0',
-    fontSize: '13px',
-    color: '#6B7280',
-  },
-  shareBtn: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '8px 16px',
-    backgroundColor: '#F3E8FF',
-    color: '#7B2FE0',
-    border: 'none',
-    borderRadius: '8px',
-    fontWeight: 600,
-    fontSize: '14px',
-    cursor: 'pointer',
-  },
-  adminNavBtn: {
-    padding: '8px 14px',
-    backgroundColor: '#E5E7EB',
-    color: '#374151',
-    border: 'none',
-    borderRadius: '8px',
-    fontWeight: 500,
-    fontSize: '13px',
-    cursor: 'pointer',
-  },
   btnSecondary: {
     display: 'inline-flex',
     alignItems: 'center',
@@ -403,10 +492,66 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontWeight: 600,
     cursor: 'pointer',
   },
-  main: {
-    maxWidth: '1100px',
-    margin: '0 auto',
-    padding: '24px 20px 60px',
+  appContainer: {
+    width: '100%',
+    maxWidth: '480px',
+    backgroundColor: '#FFFFFF',
+    minHeight: '100vh',
+    boxShadow: '0 0 20px rgba(0,0,0,0.05)',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  storeHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '20px 16px 12px',
+  },
+  avatarCircle: {
+    width: '50px',
+    height: '50px',
+    borderRadius: '25px',
+    backgroundColor: '#F0F0F0',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    border: '1px solid #EAEAEA',
+  },
+  avatarImg: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+  },
+  avatarLetter: {
+    fontSize: '22px',
+    fontWeight: 800,
+    color: PURPLE,
+  },
+  storeHeaderText: {
+    flex: 1,
+  },
+  storeTitle: {
+    margin: 0,
+    fontSize: '17px',
+    fontWeight: 700,
+    color: '#1A1A1A',
+  },
+  storeSubtitle: {
+    margin: '2px 0 0',
+    fontSize: '12px',
+    color: '#888888',
+  },
+  shareBtn: {
+    width: '38px',
+    height: '38px',
+    borderRadius: '19px',
+    border: '1px solid #EAEAEA',
+    backgroundColor: '#FFFFFF',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
   },
   inactiveNotice: {
     backgroundColor: '#FEF3C7',
@@ -416,137 +561,270 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'flex',
     gap: '14px',
     alignItems: 'flex-start',
-    margin: '20px 0',
+    margin: '20px 16px',
   },
-  filterBar: {
-    marginBottom: '24px',
+  storeContent: {
+    padding: '0 16px 32px',
     display: 'flex',
     flexDirection: 'column',
     gap: '16px',
   },
-  searchBox: {
-    position: 'relative',
+  dropdownTrigger: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    borderRadius: '30px',
+    border: '1px solid #EAEAEA',
+    padding: '14px 20px',
+    minHeight: '52px',
+    cursor: 'pointer',
     width: '100%',
-  },
-  searchIcon: {
-    position: 'absolute',
-    left: '14px',
-    top: '50%',
-    transform: 'translateY(-50%)',
-  },
-  searchInput: {
-    width: '100%',
-    padding: '12px 16px 12px 42px',
-    fontSize: '15px',
-    borderRadius: '10px',
-    border: '1px solid #D1D5DB',
-    outline: 'none',
     boxSizing: 'border-box',
   },
-  categoryPills: {
-    display: 'flex',
-    gap: '8px',
-    overflowX: 'auto',
-    paddingBottom: '4px',
-  },
-  pill: {
-    padding: '6px 14px',
-    borderRadius: '20px',
-    border: '1px solid #E5E7EB',
-    backgroundColor: '#FFFFFF',
-    color: '#4B5563',
-    fontSize: '13px',
+  dropdownTriggerText: {
+    fontSize: '14px',
+    color: '#1A1A1A',
     fontWeight: 500,
-    cursor: 'pointer',
-    whiteSpace: 'nowrap',
   },
-  activePill: {
-    padding: '6px 14px',
-    borderRadius: '20px',
-    border: '1px solid #7B2FE0',
-    backgroundColor: '#7B2FE0',
-    color: '#FFFFFF',
-    fontSize: '13px',
-    fontWeight: 600,
-    cursor: 'pointer',
-    whiteSpace: 'nowrap',
-  },
-  productGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+  productsContainer: {
+    display: 'flex',
+    flexDirection: 'column',
     gap: '20px',
   },
   productCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: '14px',
-    overflow: 'hidden',
-    border: '1px solid #E5E7EB',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
     display: 'flex',
     flexDirection: 'column',
+    gap: '14px',
   },
-  imageWrap: {
-    width: '100%',
-    height: '200px',
-    backgroundColor: '#F3F4F6',
+  imageWrapper: {
+    position: 'relative',
+    borderRadius: '16px',
     overflow: 'hidden',
+    backgroundColor: '#F5F5FA',
+    border: '1px solid #F0F0F5',
+    height: '380px',
   },
   productImg: {
     width: '100%',
     height: '100%',
     objectFit: 'cover',
   },
-  cardBody: {
-    padding: '16px',
+  heartBtn: {
+    position: 'absolute',
+    top: '16px',
+    right: '16px',
+    width: '44px',
+    height: '44px',
+    borderRadius: '22px',
+    backgroundColor: '#FFFFFF',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    border: 'none',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+    cursor: 'pointer',
+  },
+  floatingInfoBox: {
+    position: 'absolute',
+    bottom: '16px',
+    left: '16px',
+    right: '16px',
+    backgroundColor: '#FFFFFF',
+    borderRadius: '12px',
+    padding: '12px 16px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+    border: '1px solid #F0F0F0',
+    boxSizing: 'border-box',
+  },
+  infoCol: {
     display: 'flex',
     flexDirection: 'column',
+    gap: '2px',
     flex: 1,
   },
-  priceBadge: {
-    fontSize: '18px',
-    fontWeight: 700,
-    color: '#7B2FE0',
-    marginBottom: '6px',
+  infoLabel: {
+    fontSize: '11px',
+    color: '#6B6B80',
+    fontWeight: 500,
   },
-  productTitle: {
-    margin: '0 0 8px',
-    fontSize: '16px',
-    fontWeight: 600,
-    color: '#111827',
-  },
-  productDesc: {
-    margin: '0 0 16px',
-    fontSize: '13px',
-    color: '#6B7280',
-    lineHeight: 1.4,
-    flex: 1,
-  },
-  orderBtn: {
-    width: '100%',
-    padding: '10px 14px',
-    backgroundColor: '#25D366',
-    color: '#FFFFFF',
-    border: 'none',
-    borderRadius: '8px',
-    fontWeight: 600,
+  infoValue: {
     fontSize: '14px',
-    cursor: 'pointer',
+    fontWeight: 700,
+    color: PURPLE,
+  },
+  infoDivider: {
+    width: '1px',
+    height: '28px',
+    backgroundColor: '#EAEAEA',
+    margin: '0 16px',
+  },
+  whatsappBtn: {
+    backgroundColor: '#22C55E',
+    borderRadius: '12px',
+    height: '54px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     gap: '8px',
+    color: '#FFFFFF',
+    border: 'none',
+    fontSize: '15px',
+    fontWeight: 700,
+    cursor: 'pointer',
+    boxShadow: '0 2px 8px rgba(34,197,94,0.2)',
+  },
+  whatsappBtnDisabled: {
+    backgroundColor: '#AAAAAA',
+    boxShadow: 'none',
+    cursor: 'not-allowed',
   },
   emptyState: {
     textAlign: 'center',
-    padding: '60px 20px',
+    padding: '48px 24px',
+  },
+
+  // Modal styles
+  modalOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    display: 'flex',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    zIndex: 1000,
+  },
+  modalSheet: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: '24px',
+    borderTopRightRadius: '24px',
+    paddingTop: '20px',
+    paddingBottom: '24px',
+    width: '100%',
+    maxWidth: '480px',
+    maxHeight: '75vh',
+    display: 'flex',
+    flexDirection: 'column',
+    boxSizing: 'border-box',
+  },
+  modalHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '0 18px 16px',
+  },
+  modalTitle: {
+    margin: 0,
+    fontSize: '18px',
+    fontWeight: 700,
+    color: '#1A1A1A',
+    textAlign: 'center',
+    flex: 1,
+  },
+  closeBtn: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    padding: '4px',
+  },
+  modalScroll: {
+    overflowY: 'auto',
+    padding: '0 18px',
+    flex: 1,
+  },
+  modalList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+    paddingBottom: '16px',
+  },
+  brandOptionCard: {
+    display: 'flex',
+    alignItems: 'center',
+    padding: '14px',
     backgroundColor: '#FFFFFF',
     borderRadius: '16px',
-    border: '1px solid #E5E7EB',
+    border: '1px solid #EFEFEF',
+    gap: '14px',
+    cursor: 'pointer',
   },
-  footer: {
-    borderTop: '1px solid #E5E7EB',
+  brandOptionCardSelected: {
+    borderColor: PURPLE,
+  },
+  brandOptThumb: {
+    width: '58px',
+    height: '58px',
+    borderRadius: '12px',
+    objectFit: 'cover',
+    backgroundColor: '#F0F0F0',
+  },
+  brandOptName: {
+    fontSize: '14px',
+    fontWeight: 700,
+    color: '#1A1A1A',
+  },
+  brandOptColors: {
+    fontSize: '12px',
+    color: '#999999',
+    marginTop: '3px',
+  },
+  colorOptionCard: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '14px 16px',
     backgroundColor: '#FFFFFF',
-    padding: '24px 20px',
-    textAlign: 'center',
+    borderRadius: '16px',
+    border: '1px solid #EFEFEF',
+    cursor: 'pointer',
+  },
+  colorOptionCardSelected: {
+    borderColor: PURPLE,
+  },
+  colorOptName: {
+    fontSize: '15px',
+    fontWeight: 600,
+    color: '#1A1A1A',
+  },
+  radio: {
+    width: '22px',
+    height: '22px',
+    borderRadius: '11px',
+    border: '2px solid #DEDEDE',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxSizing: 'border-box',
+  },
+  radioSelected: {
+    borderColor: PURPLE,
+  },
+  radioDot: {
+    width: '10px',
+    height: '10px',
+    borderRadius: '5px',
+    backgroundColor: PURPLE,
+  },
+  modalFooter: {
+    padding: '12px 18px 0',
+    borderTop: '1px solid #EAEAEA',
+  },
+  modalContinueBtn: {
+    width: '100%',
+    backgroundColor: PURPLE,
+    borderRadius: '30px',
+    padding: '17px',
+    border: 'none',
+    color: '#FFFFFF',
+    fontSize: '15px',
+    fontWeight: 800,
+    cursor: 'pointer',
+    letterSpacing: '0.3px',
   },
 };

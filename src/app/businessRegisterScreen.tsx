@@ -135,7 +135,7 @@ export default function BusinessRegisteredScreen() {
                             <Text style={styles.cardDesc}>Get access to all features and{"\n"}grow your business with ease</Text>
                         </View>
                         <View style={styles.priceBadge}>
-                            <Text style={styles.priceAmount}>₦1000</Text>
+                            <Text style={styles.priceAmount}>₦500</Text>
                             <Text style={styles.pricePer}>Per month</Text>
                         </View>
                     </View>
@@ -169,7 +169,7 @@ export default function BusinessRegisteredScreen() {
                     </View>
                     <View>
                         <Text style={styles.howTitle}>How It Work</Text>
-                        <Text style={styles.howSub}>Pay ₦1000 now to activate your account</Text>
+                        <Text style={styles.howSub}>Pay ₦500 now to activate your account</Text>
                     </View>
                 </Animated.View>
 
