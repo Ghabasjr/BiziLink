@@ -45,12 +45,22 @@ export default function PaymentPage() {
 
             try {
                 const mimeType = blob.type || "image/jpeg";
-                const receiptRef = ref(storage, `receipts/${user.uid}/${Date.now()}`);
+                console.log("[Payment] Blob info:", {
+                    size: blob.size,
+                    type: blob.type,
+                    mimeTypeUsed: mimeType,
+                });
+
+                const storagePath = `receipts/${user.uid}/${Date.now()}`;
+                const receiptRef = ref(storage, storagePath);
+                console.log("[Payment] Uploading to path:", storagePath);
 
                 // Upload using uploadBytes for robust single-request upload in React Native
                 await uploadBytes(receiptRef, blob, { contentType: mimeType });
+                console.log("[Payment] uploadBytes succeeded.");
 
                 const receiptUrl = await getDownloadURL(receiptRef);
+                console.log("[Payment] Download URL obtained:", receiptUrl);
 
                 // Update subscription status to 'pending' in Firestore
                 await updateDoc(doc(db, "users", user.uid), {
@@ -66,15 +76,22 @@ export default function PaymentPage() {
                 }
             }
         } catch (error: any) {
-            console.error("Receipt upload failure details:", {
-                code: error?.code,
-                message: error?.message,
-                serverResponse: error?.serverResponse,
-                customData: error?.customData,
-            });
+            // ── Full error dump so we can identify the storage/unknown cause ──
+            console.error("[Payment] ❌ Receipt upload FAILED — full error object:", error);
+            console.error("[Payment] Error code:", error?.code);
+            console.error("[Payment] Error message:", error?.message);
+            console.error("[Payment] Error stack:", error?.stack);
+            console.error("[Payment] customData:", JSON.stringify(error?.customData, null, 2));
+            console.error("[Payment] serverResponse:", error?.serverResponse);
+            // Firebase Storage attaches the raw HTTP response body in customData._baseMessage or similar
+            console.error("[Payment] customData._baseMessage:", error?.customData?._baseMessage);
+            console.error("[Payment] customData.serverResponse:", error?.customData?.serverResponse);
 
             const codeStr = error?.code ? ` (${error.code})` : "";
-            const detailStr = error?.serverResponse || error?.message || "An unexpected error occurred.";
+            const detailStr = error?.serverResponse
+                ?? error?.customData?.serverResponse
+                ?? error?.message
+                ?? "An unexpected error occurred.";
             Alert.alert("Upload Error", `Upload failed${codeStr}: ${detailStr}`);
         } finally {
             setIsSubmitting(false);
@@ -93,3 +110,112 @@ export default function PaymentPage() {
         />
     );
 }
+
+
+//  WARN  [2026-08-26T04:54:28.823Z]  @firebase/firestore: Firestore (12.15.0): WebChannelConnection RPC 'Listen' stream 0x27d76f6f transport errored. Name: undefined Message: undefined
+//  ERROR  [Payment] ❌ Receipt upload FAILED — full error object: [FirebaseError: Firebase Storage: An unknown error occurred, please check the error payload for server response. (storage/unknown)] FirebaseError: Firebase Storage: An unknown error occurred, please check the error payload for server response. (storage/unknown)
+//  ERROR  [Payment] Error code: storage/unknown 
+
+// Call Stack
+//   apply (<native>)
+//   NamelessError (node_modules\@expo\metro-runtime\src\metroServerLogs.native.ts)
+//   captureCurrentStack (node_modules\@expo\metro-runtime\src\metroServerLogs.native.ts)
+//   HMRClient.log (node_modules\@expo\metro-runtime\src\metroServerLogs.native.ts)
+//   console.level (node_modules\react-native\Libraries\Core\setUpDeveloperTools.js)
+//   handleSubmit (src\app\payment.tsx)
+//   throw (<native>)
+//   anonymous (address at (InternalBytecode.js:1:8791)
+//   step (address at (InternalBytecode.js:1:6505)
+//   anonymous (address at (InternalBytecode.js:1:7697)
+//   tryCallOne (address at (InternalBytecode.js:1:1274)
+//   anonymous (address at (InternalBytecode.js:1:4865)
+//  ERROR  [Payment] Error message: Firebase Storage: An unknown error occurred, please check the error payload for server response. (storage/unknown) 
+
+// Call Stack
+//   apply (<native>)
+//   NamelessError (node_modules\@expo\metro-runtime\src\metroServerLogs.native.ts)
+//   captureCurrentStack (node_modules\@expo\metro-runtime\src\metroServerLogs.native.ts)
+//   HMRClient.log (node_modules\@expo\metro-runtime\src\metroServerLogs.native.ts)
+//   console.level (node_modules\react-native\Libraries\Core\setUpDeveloperTools.js)
+//   handleSubmit (src\app\payment.tsx)
+//   throw (<native>)
+//   anonymous (address at (InternalBytecode.js:1:8791)
+//   step (address at (InternalBytecode.js:1:6505)
+//   anonymous (address at (InternalBytecode.js:1:7697)
+//   tryCallOne (address at (InternalBytecode.js:1:1274)
+//   anonymous (address at (InternalBytecode.js:1:4865)
+//  ERROR  [Payment] Error stack: FirebaseError: Firebase Storage: An unknown error occurred, please check the error payload for server response. (storage/unknown) 
+
+// Call Stack
+//   apply (<native>)
+//   NamelessError (node_modules\@expo\metro-runtime\src\metroServerLogs.native.ts)
+//   captureCurrentStack (node_modules\@expo\metro-runtime\src\metroServerLogs.native.ts)
+//   HMRClient.log (node_modules\@expo\metro-runtime\src\metroServerLogs.native.ts)
+//   console.level (node_modules\react-native\Libraries\Core\setUpDeveloperTools.js)
+//   handleSubmit (src\app\payment.tsx)
+//   throw (<native>)
+//   anonymous (address at (InternalBytecode.js:1:8791)
+//   step (address at (InternalBytecode.js:1:6505)
+//   anonymous (address at (InternalBytecode.js:1:7697)
+//   tryCallOne (address at (InternalBytecode.js:1:1274)
+//   anonymous (address at (InternalBytecode.js:1:4865)
+//  ERROR  [Payment] customData: {} 
+
+// Call Stack
+//   apply (<native>)
+//   NamelessError (node_modules\@expo\metro-runtime\src\metroServerLogs.native.ts)
+//   captureCurrentStack (node_modules\@expo\metro-runtime\src\metroServerLogs.native.ts)
+//   HMRClient.log (node_modules\@expo\metro-runtime\src\metroServerLogs.native.ts)
+//   console.level (node_modules\react-native\Libraries\Core\setUpDeveloperTools.js)
+//   handleSubmit (src\app\payment.tsx)
+//   throw (<native>)
+//   anonymous (address at (InternalBytecode.js:1:8791)
+//   step (address at (InternalBytecode.js:1:6505)
+//   anonymous (address at (InternalBytecode.js:1:7697)
+//   tryCallOne (address at (InternalBytecode.js:1:1274)
+//   anonymous (address at (InternalBytecode.js:1:4865)
+//  ERROR  [Payment] serverResponse: undefined 
+
+// Call Stack
+//   apply (<native>)
+//   NamelessError (node_modules\@expo\metro-runtime\src\metroServerLogs.native.ts)
+//   captureCurrentStack (node_modules\@expo\metro-runtime\src\metroServerLogs.native.ts)
+//   HMRClient.log (node_modules\@expo\metro-runtime\src\metroServerLogs.native.ts)
+//   console.level (node_modules\react-native\Libraries\Core\setUpDeveloperTools.js)
+//   handleSubmit (src\app\payment.tsx)
+//   throw (<native>)
+//   anonymous (address at (InternalBytecode.js:1:8791)
+//   step (address at (InternalBytecode.js:1:6505)
+//   anonymous (address at (InternalBytecode.js:1:7697)
+//   tryCallOne (address at (InternalBytecode.js:1:1274)
+//   anonymous (address at (InternalBytecode.js:1:4865)
+//  ERROR  [Payment] customData._baseMessage: undefined 
+
+// Call Stack
+//   apply (<native>)
+//   NamelessError (node_modules\@expo\metro-runtime\src\metroServerLogs.native.ts)
+//   captureCurrentStack (node_modules\@expo\metro-runtime\src\metroServerLogs.native.ts)
+//   HMRClient.log (node_modules\@expo\metro-runtime\src\metroServerLogs.native.ts)
+//   console.level (node_modules\react-native\Libraries\Core\setUpDeveloperTools.js)
+//   handleSubmit (src\app\payment.tsx)
+//   throw (<native>)
+//   anonymous (address at (InternalBytecode.js:1:8791)
+//   step (address at (InternalBytecode.js:1:6505)
+//   anonymous (address at (InternalBytecode.js:1:7697)
+//   tryCallOne (address at (InternalBytecode.js:1:1274)
+//   anonymous (address at (InternalBytecode.js:1:4865)
+//  ERROR  [Payment] customData.serverResponse: undefined 
+
+// Call Stack
+//   apply (<native>)
+//   NamelessError (node_modules\@expo\metro-runtime\src\metroServerLogs.native.ts)
+//   captureCurrentStack (node_modules\@expo\metro-runtime\src\metroServerLogs.native.ts)
+//   HMRClient.log (node_modules\@expo\metro-runtime\src\metroServerLogs.native.ts)
+//   console.level (node_modules\react-native\Libraries\Core\setUpDeveloperTools.js)
+//   handleSubmit (src\app\payment.tsx)
+//   throw (<native>)
+//   anonymous (address at (InternalBytecode.js:1:8791)
+//   step (address at (InternalBytecode.js:1:6505)
+//   anonymous (address at (InternalBytecode.js:1:7697)
+//   tryCallOne (address at (InternalBytecode.js:1:1274)
+//   anonymous (address at (InternalBytecode.js:1:4865)

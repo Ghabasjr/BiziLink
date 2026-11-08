@@ -11,7 +11,7 @@ export function useGoogleAuth() {
   useEffect(() => {
     console.log('[GoogleAuth] Configuring Google Sign-In');
     GoogleSignin.configure({
-      webClientId: WEB_CLIENT_ID, // must be the WEB client, not android/iOS
+      webClientId: WEB_CLIENT_ID,
       offlineAccess: true,
     });
   }, []);
